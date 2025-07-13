@@ -1,0 +1,90 @@
+<!-- core/templates/stope/upload_excel.html -->
+{% extends "core/base.html" %}
+
+{% block title %}Upload Excel{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+  <h1 class="text-3xl font-bold text-gray-900 mb-6">Upload Excel File</h1>
+  
+  {% if messages %}
+    {% for message in messages %}
+      <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% elif message.tags == 'warning' %}bg-yellow-100 text-yellow-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+        {{ message }}
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <!-- Upload Form -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">Upload Stope Data</h2>
+      <form method="POST" enctype="multipart/form-data" class="space-y-4">
+        {% csrf_token %}
+        <div>
+          <label for="excel_file" class="block text-sm font-medium text-gray-700 mb-2">
+            Select Excel File (.xlsx)
+          </label>
+          <input type="file" name="excel_file" accept=".xlsx,.xls" 
+                 class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" required>
+          <p class="mt-1 text-sm text-gray-500">Select an Excel file containing stope data</p>
+        </div>
+        <button type="submit" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition duration-200">
+          📊 Upload and Process
+        </button>
+      </form>
+    </div>
+
+    <!-- Format Guide -->
+    <div class="bg-white p-6 rounded-lg shadow">
+      <h2 class="text-xl font-semibold text-gray-900 mb-4">Required Format</h2>
+      <div class="space-y-4">
+        <div>
+          <h3 class="font-medium text-gray-900 mb-2">Required Columns:</h3>
+          <ul class="text-sm text-gray-600 space-y-1">
+            <li><strong>stope_name</strong> - Unique name for the stope</li>
+            <li><strong>rqd</strong> - Rock Quality Designation (0-100)</li>
+            <li><strong>hr</strong> - Hydraulic Radius (positive number)</li>
+            <li><strong>depth</strong> - Depth below surface in meters</li>
+            <li><strong>dip</strong> - Dip angle in degrees (0-90)</li>
+            <li><strong>direction</strong> - Direction (see valid options below)</li>
+            <li><strong>undercut_wdt</strong> - Undercut width in meters</li>
+            <li><strong>rock_type</strong> - Rock type (see valid options below)</li>
+            <li><strong>support_type</strong> - Support type (see valid options below)</li>
+            <li><strong>support_density</strong> - Support density (positive number)</li>
+            <li><strong>support_installed</strong> - True/False or 1/0</li>
+          </ul>
+        </div>
+
+        <div>
+          <h3 class="font-medium text-gray-900 mb-2">Valid Direction Options:</h3>
+          <p class="text-sm text-gray-600">North, South, East, West, Northeast, Northwest, Southeast, Southwest</p>
+        </div>
+
+        <div>
+          <h3 class="font-medium text-gray-900 mb-2">Valid Rock Types:</h3>
+          <p class="text-sm text-gray-600">Granite, Basalt, Obsidian, Shale, Marble, Slate, Gneiss, Schist, Quartzite, Limestone, Sandstone</p>
+        </div>
+
+        <div>
+          <h3 class="font-medium text-gray-900 mb-2">Valid Support Types:</h3>
+          <p class="text-sm text-gray-600">None, Rock Bolts, Mesh, Shotcrete, Timber, Cable Bolts, Steel Sets</p>
+          <p class="text-xs text-gray-500 mt-1">
+            <strong>Note:</strong> If support_type is "None", set support_density to 0 and support_installed to False. 
+            For any other support type, support_density should be > 0 and support_installed should be True.
+          </p>
+        </div>
+
+        <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+          <p class="text-sm text-blue-700">
+            <strong>💡 Tip:</strong> Download the sample CSV file to see the exact format required.
+          </p>
+          <a href="/static/sample_stopes.csv" download class="inline-block mt-2 text-sm text-blue-600 hover:text-blue-800 underline">
+            📥 Download Sample CSV
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

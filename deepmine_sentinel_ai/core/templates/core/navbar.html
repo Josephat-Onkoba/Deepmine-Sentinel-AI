@@ -1,0 +1,15 @@
+<!-- core/templates/core/navbar.html -->
+<nav class="bg-white shadow mb-8">
+  <div class="max-w-6xl mx-auto px-4">
+    <div class="flex justify-between items-center py-4">
+      <div class="text-xl font-bold text-blue-600">
+        <a href="{% url 'home' %}" class="hover:text-blue-800">DeepMine Sentinel</a>
+      </div>
+      <div class="space-x-4">
+        <a href="{% url 'stope_create' %}" class="text-gray-700 hover:text-blue-500">Add Stope</a>
+        <a href="{% url 'stope_list' %}" class="text-gray-700 hover:text-blue-500">Stopes</a>
+        <a href="{% url 'upload_excel' %}" class="text-gray-700 hover:text-blue-500">Upload Excel</a>
+      </div>
+    </div>
+  </div>
+</nav>

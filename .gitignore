@@ -1,0 +1,393 @@
+# DeepMine Sentinel AI - .gitignore
+
+# ===== PYTHON =====
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Translations
+*.mo
+*.pot
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# poetry
+poetry.lock
+
+# pdm
+.pdm.toml
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+myenv/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# pytype static type analyzer
+.pytype/
+
+# Cython debug symbols
+cython_debug/
+
+# PyCharm
+.idea/
+
+# ===== DJANGO =====
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Django migrations (uncomment if you want to ignore migrations)
+# */migrations/*.py
+# */migrations/*.pyc
+# !*/migrations/__init__.py
+
+# Static files (if collected)
+/static/
+/staticfiles/
+
+# Media files
+/media/
+
+# Django secret key and environment variables
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# ===== MACHINE LEARNING & DATA SCIENCE =====
+# Trained models
+*.h5
+*.hdf5
+*.pkl
+*.pickle
+*.joblib
+*.pt
+*.pth
+*.onnx
+*.pb
+*.tflite
+*.keras
+
+# Model checkpoints and logs
+checkpoints/
+logs/
+runs/
+experiments/
+mlruns/
+wandb/
+
+# TensorBoard logs
+events.out.tfevents.*
+
+# Weights & Biases
+wandb/
+
+# MLflow
+mlruns/
+
+# DVC
+.dvc/
+.dvcignore
+
+# ===== DATA FILES =====
+# Large data files
+*.csv
+*.tsv
+*.json
+*.jsonl
+*.parquet
+*.h5
+*.hdf5
+*.npz
+*.npy
+
+# Exclude specific data files but allow sample/test data
+!sample_*.csv
+!test_*.csv
+!*_sample.csv
+!*_test.csv
+
+# Raw data directories
+data/raw/
+data/processed/
+data/external/
+data/interim/
+
+# Exception: Keep aligned datasets that are part of the project
+!deepmine_sentinel_ai/data/stope_static_features_aligned.csv
+!deepmine_sentinel_ai/data/stope_timeseries_data_aligned.csv
+!deepmine_sentinel_ai/core/static/sample_stopes.csv
+
+# ===== PLOTS AND VISUALIZATIONS =====
+# Generated plots (but keep sample plots for documentation)
+plots/*.png
+plots/*.jpg
+plots/*.jpeg
+plots/*.pdf
+plots/*.svg
+plots/*.eps
+
+# Exception: Keep documentation plots
+!plots/architecture_*.png
+!plots/model_*.png
+!plots/example_*.png
+
+# ===== MINING-SPECIFIC FILES =====
+# Mining simulation outputs
+*.sim
+*.out
+*.res
+
+# CAD files
+*.dwg
+*.dxf
+
+# GIS files
+*.shp
+*.shx
+*.dbf
+*.prj
+
+# ===== SYSTEM FILES =====
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+ehthumbs_vista.db
+*.tmp
+*.temp
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# Linux
+*~
+
+# ===== EDITORS =====
+# VS Code
+.vscode/
+*.code-workspace
+
+# Sublime Text
+*.tmlanguage.cache
+*.tmPreferences.cache
+*.stTheme.cache
+*.sublime-workspace
+*.sublime-project
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
+# ===== DEPLOYMENT =====
+# Docker
+.dockerignore
+Dockerfile.prod
+
+# Kubernetes
+*.yaml.bak
+*.yml.bak
+
+# Terraform
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# ===== DOCUMENTATION =====
+# Sphinx documentation
+docs/_build/
+_build/
+.doctrees/
+
+# LaTeX
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.toc
+
+# ===== TEMPORARY FILES =====
+# Temporary directories
+tmp/
+temp/
+cache/
+
+# Backup files
+*.bak
+*.backup
+*.orig
+
+# ===== SECURITY =====
+# API keys and secrets
+secrets.json
+credentials.json
+service-account.json
+*.pem
+*.key
+*.crt
+
+# SSL certificates
+ssl/
+
+# ===== PROJECT-SPECIFIC =====
+# Mining data exports
+exports/
+reports/generated/
+
+# Experiment results
+results/
+output/
+
+# Configuration files with sensitive data
+config/production.py
+config/local.py
+
+# Uploaded files
+uploads/
+
+# Generated documentation
+docs/generated/
+
+# Performance profiling
+*.prof
+*.profile
+
+# Memory dumps
+*.dump
+*.core
+
+# Debug files
+debug/
+*.debug
+
+# ===== MISC =====
+# Compressed files
+*.zip
+*.tar.gz
+*.rar
+*.7z
+
+# Node.js (if using for frontend)
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# End of .gitignore

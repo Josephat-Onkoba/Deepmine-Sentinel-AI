@@ -1,0 +1,411 @@
+<!-- core/templates/stope/stope_detail.html -->
+{% extends "core/base.html" %}
+
+{% block title %}Stope Details - {{ stope.stope_name }}{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ stope.stope_name }}</h1>
+        <p class="text-gray-600">Created: {{ stope.created_at|date:"M d, Y" }}</p>
+    </div>
+
+    <!-- Static Features Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Static Features</h2>
+            <div class="grid grid-cols-2 gap-4 text-sm">
+                <div><strong>Depth:</strong> {{ stope.depth }} m</div>
+                <div><strong>RQD:</strong> {{ stope.rqd }}%</div>
+                <div><strong>Hydraulic Radius:</strong> {{ stope.hr }}</div>
+                <div><strong>Dip:</strong> {{ stope.dip }}°</div>
+                <div><strong>Direction:</strong> {{ stope.direction }}</div>
+                <div><strong>Undercut Width:</strong> {{ stope.undercut_wdt }} m</div>
+                <div><strong>Rock Type:</strong> {{ stope.rock_type }}</div>
+                <div><strong>Support Type:</strong> {{ stope.support_type }}</div>
+                <div><strong>Support Density:</strong> {{ stope.support_density }}</div>
+                <div><strong>Support Installed:</strong> {% if stope.support_installed %}Yes{% else %}No{% endif %}</div>
+            </div>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">Stope Profile Summary</h2>
+            <div class="bg-gray-50 p-4 rounded text-sm font-mono whitespace-pre-wrap">{{ profile }}</div>
+        </div>
+    </div>
+
+    <!-- ML Prediction Section -->
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
+            <span class="mr-2">🤖</span>
+            AI Stability Prediction
+        </h2>
+        
+        {% if ml_prediction %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Prediction Result -->
+                <div class="space-y-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm font-medium text-gray-600">Risk Level:</span>
+                        <span class="px-3 py-1 rounded-full text-sm font-medium
+                            {% if ml_prediction.prediction == 'Stable' %}bg-green-100 text-green-800
+                            {% elif ml_prediction.prediction == 'Elevated Risk' %}bg-yellow-100 text-yellow-800
+                            {% elif ml_prediction.prediction == 'High Risk' %}bg-orange-100 text-orange-800
+                            {% elif ml_prediction.prediction == 'Unstable' %}bg-red-100 text-red-800
+                            {% endif %}">
+                            {{ ml_prediction.prediction }}
+                        </span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <span class="text-sm font-medium text-gray-600">Confidence:</span>
+                        <div class="flex-1">
+                            <div class="bg-gray-200 rounded-full h-2">
+                                <div class="bg-blue-600 h-2 rounded-full" 
+                                     data-width="{{ ml_prediction.confidence|floatformat:0 }}"></div>
+                            </div>
+                            <span class="text-sm text-gray-500">{{ ml_prediction.confidence|floatformat:1 }}%</span>
+                        </div>
+                    </div>
+                    
+                    {% if ml_prediction.probabilities %}
+                    <div class="space-y-2">
+                        <span class="text-sm font-medium text-gray-600">Risk Probabilities:</span>
+                        {% for class_name, probability in ml_prediction.probabilities.items %}
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-600">{{ class_name }}:</span>
+                                <span class="text-xs font-medium">{{ probability|floatformat:1 }}%</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Explanation -->
+                <div>
+                    <h4 class="text-sm font-medium text-gray-600 mb-2">Explanation:</h4>
+                    <div class="bg-gray-50 p-3 rounded text-sm">
+                        {{ ml_prediction.explanation|linebreaks }}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model Info -->
+            {% if ml_prediction.model_info %}
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <details class="text-sm text-gray-600">
+                    <summary class="cursor-pointer hover:text-gray-800">Model Information</summary>
+                    <div class="mt-2 pl-4">
+                        <p><strong>Time Series Data:</strong> 
+                            {% if ml_prediction.model_info.has_timeseries_data %}
+                                {{ ml_prediction.model_info.timeseries_points }} data points
+                            {% else %}
+                                No time series data available
+                            {% endif %}
+                        </p>
+                        <p><strong>Prediction Time:</strong> {{ ml_prediction.model_info.prediction_time }}</p>
+                    </div>
+                </details>
+            </div>
+            {% endif %}
+            
+        {% else %}
+            <div class="text-center py-8">
+                <div class="text-gray-400 mb-4">
+                    <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                    </svg>
+                </div>
+                <p class="text-gray-600 mb-4">AI model is not available or not trained yet.</p>
+                <button onclick="generatePrediction()" 
+                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                    Generate Prediction
+                </button>
+            </div>
+        {% endif %}
+        
+        <!-- Recent Predictions -->
+        {% if recent_predictions %}
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <h4 class="text-sm font-medium text-gray-600 mb-3">Recent Predictions</h4>
+            <div class="space-y-2">
+                {% for prediction in recent_predictions %}
+                    <div class="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
+                        <span class="
+                            {% if prediction.risk_level == 'Stable' %}text-green-600
+                            {% elif prediction.risk_level == 'Elevated Risk' %}text-yellow-600
+                            {% elif prediction.risk_level == 'High Risk' %}text-orange-600
+                            {% elif prediction.risk_level == 'Unstable' %}text-red-600
+                            {% endif %}">
+                            {{ prediction.risk_level }}
+                        </span>
+                        <span class="text-gray-500">{{ prediction.created_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Time Series Section -->
+    <div class="bg-white p-6 rounded-lg shadow mb-8">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">Time Series Data</h2>
+        
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200 mb-6">
+            <nav class="-mb-px flex space-x-8">
+                <button class="tab-button active py-2 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600" 
+                        onclick="showTab('manual-entry')">
+                    Manual Entry
+                </button>
+                <button class="tab-button py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" 
+                        onclick="showTab('file-upload')">
+                    File Upload
+                </button>
+                <button class="tab-button py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" 
+                        onclick="showTab('view-data')">
+                    View Data
+                </button>
+            </nav>
+        </div>
+
+        <!-- Manual Entry Tab -->
+        <div id="manual-entry" class="tab-content">
+            <form method="post" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Timestamp</label>
+                    {{ timeseries_form.timestamp }}
+                    <p class="text-xs text-gray-500">{{ timeseries_form.timestamp.help_text }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Vibration Velocity</label>
+                    {{ timeseries_form.vibration_velocity }}
+                    <p class="text-xs text-gray-500">{{ timeseries_form.vibration_velocity.help_text }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Deformation Rate</label>
+                    {{ timeseries_form.deformation_rate }}
+                    <p class="text-xs text-gray-500">{{ timeseries_form.deformation_rate.help_text }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Stress</label>
+                    {{ timeseries_form.stress }}
+                    <p class="text-xs text-gray-500">{{ timeseries_form.stress.help_text }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Temperature</label>
+                    {{ timeseries_form.temperature }}
+                    <p class="text-xs text-gray-500">{{ timeseries_form.temperature.help_text }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Humidity</label>
+                    {{ timeseries_form.humidity }}
+                    <p class="text-xs text-gray-500">{{ timeseries_form.humidity.help_text }}</p>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    {{ timeseries_form.notes }}
+                    <p class="text-xs text-gray-500">{{ timeseries_form.notes.help_text }}</p>
+                </div>
+                <div class="md:col-span-2 lg:col-span-3">
+                    <button type="submit" name="add_timeseries" 
+                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
+                        Add Time Series Data
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- File Upload Tab -->
+        <div id="file-upload" class="tab-content hidden">
+            <form method="post" enctype="multipart/form-data" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload Excel/CSV File</label>
+                    {{ upload_form.csv_file }}
+                    <p class="text-sm text-gray-500 mt-1">{{ upload_form.csv_file.help_text }}</p>
+                </div>
+                <div>
+                    <button type="submit" name="upload_file" 
+                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                        Upload File
+                    </button>
+                </div>
+                <div class="bg-blue-50 p-4 rounded">
+                    <h4 class="font-medium text-blue-800 mb-2">Expected File Format:</h4>
+                    <p class="text-sm text-blue-700">
+                        CSV/Excel file with columns: timestamp, vibration_velocity, deformation_rate, stress, temperature, humidity, notes
+                    </p>
+                </div>
+            </form>
+        </div>
+
+        <!-- View Data Tab -->
+        <div id="view-data" class="tab-content hidden">
+            {% if timeseries_data %}
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vibration (mm/s)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deformation Rate (mm/day)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stress (MPa)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temp (°C)</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Humidity (%)</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for data in timeseries_data %}
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.timestamp|date:"M d, Y H:i" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.vibration_velocity|default:"-" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.deformation_rate|default:"-" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.stress|default:"-" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.temperature|default:"-" }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.humidity|default:"-" }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4">
+                    <p class="text-sm text-gray-600">Showing latest {{ timeseries_data|length }} records.</p>
+                </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <p class="text-gray-500">No time series data available for this stope.</p>
+                    <p class="text-sm text-gray-400 mt-2">Add data using the Manual Entry or File Upload tabs.</p>
+                </div>
+            {% endif %}
+
+            {% if timeseries_uploads %}
+                <div class="mt-8">
+                    <h4 class="font-medium text-gray-800 mb-4">Recent File Uploads</h4>
+                    <div class="space-y-2">
+                        {% for upload in timeseries_uploads %}
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded">
+                            <span class="text-sm">{{ upload.csv_file.name }}</span>
+                            <span class="text-xs text-gray-500">{{ upload.uploaded_at|date:"M d, Y H:i" }}</span>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="flex space-x-4">
+        <a href="{% url 'stope_list' %}" 
+           class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
+            Back to Stope List
+        </a>
+    </div>
+</div>
+
+<script>
+function showTab(tabName) {
+    // Hide all tab contents
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.add('hidden');
+    });
+    
+    // Remove active class from all buttons
+    document.querySelectorAll('.tab-button').forEach(button => {
+        button.classList.remove('active', 'text-blue-600', 'border-blue-500');
+        button.classList.add('text-gray-500', 'border-transparent');
+    });
+    
+    // Show selected tab content
+    document.getElementById(tabName).classList.remove('hidden');
+    
+    // Add active class to clicked button
+    event.target.classList.add('active', 'text-blue-600', 'border-blue-500');
+    event.target.classList.remove('text-gray-500', 'border-transparent');
+}
+
+function generatePrediction() {
+    const button = event.target;
+    const originalText = button.textContent;
+    
+    // Show loading state
+    button.textContent = 'Generating...';
+    button.disabled = true;
+    
+    // Make AJAX request to generate prediction
+    fetch(`/api/predict/{{ stope.id }}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Reload the page to show the new prediction
+            window.location.reload();
+        } else {
+            alert('Error generating prediction: ' + data.error);
+            button.textContent = originalText;
+            button.disabled = false;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while generating the prediction.');
+        button.textContent = originalText;
+        button.disabled = false;
+    });
+}
+
+function submitFeedback(predictionId, isHelpful) {
+    const data = {
+        is_helpful: isHelpful,
+        corrected_text: ''
+    };
+    
+    // If negative feedback, ask for correction
+    if (!isHelpful) {
+        const correction = prompt('Please provide the correct stability assessment or additional information:');
+        if (correction !== null) {
+            data.corrected_text = correction;
+        } else {
+            return; // User cancelled
+        }
+    }
+    
+    fetch(`/api/feedback/${predictionId}/`, {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+        } else {
+            alert('Error submitting feedback: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred while submitting feedback.');
+    });
+}
+
+// Set progress bar widths dynamically
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-width]').forEach(function(element) {
+        const width = element.getAttribute('data-width');
+        element.style.width = width + '%';
+    });
+});
+</script>
+{% endblock %}
