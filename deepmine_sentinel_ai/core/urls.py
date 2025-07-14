@@ -15,4 +15,14 @@ urlpatterns = [
     path('ml/dashboard/', views.ml_dashboard, name='ml_dashboard'),
     path('ml/batch-predict/', views.batch_predict, name='batch_predict'),
     path('ml/batch-results/', views.batch_predict_results, name='batch_predict_results'),
+
+    # Enhanced ML URLs
+    path('api/train-model/', views.train_enhanced_model, name='train_enhanced_model'),
+    path('ml/health/', views.model_health_dashboard, name='model_health_dashboard'),
+    path('api/trigger-prediction/<int:pk>/', views.trigger_prediction_update, name='trigger_prediction_update'),
+    
+    # Temporal prediction and alert URLs
+    path('stopes/<int:pk>/temporal/', views.temporal_prediction_dashboard, name='temporal_prediction_dashboard'),
+    path('alerts/<int:alert_id>/acknowledge/', views.acknowledge_alert, name='acknowledge_alert'),
+    path('alerts/<int:alert_id>/resolve/', views.resolve_alert, name='resolve_alert'),
 ]

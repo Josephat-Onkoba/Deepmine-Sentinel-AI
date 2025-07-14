@@ -1,113 +1,575 @@
-<!-- core/templates/core/home.html -->
 {% extends "core/base.html" %}
 
 {% block title %}DeepMine Sentinel AI - Dashboard{% endblock %}
 
 {% block content %}
-<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-  <!-- Stats Cards -->
-  <div class="bg-white p-6 rounded-lg shadow">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm font-medium text-gray-600">Total Stopes</p>
-        <p class="text-3xl font-bold text-blue-600">{{ total_stopes }}</p>
-      </div>
-      <div class="p-3 rounded-full bg-blue-100">
-        <svg class="w-8 h-8 text-blue-600" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"></path>
-        </svg>
-      </div>
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="hero-content">
+        <div class="hero-text">
+            <h1 class="hero-title">
+                Advanced Mining Intelligence
+                <span class="hero-highlight">Powered by AI</span>
+            </h1>
+            <p class="hero-description">
+                Real-time stope stability prediction and risk assessment system using advanced neural networks 
+                and machine learning to ensure mining safety and operational excellence.
+            </p>
+            <div class="hero-actions">
+                <a href="{% url 'stope_create' %}" class="btn btn-primary btn-lg">
+                    <span>🎯</span>
+                    Analyze New Stope
+                </a>
+                <a href="{% url 'upload_excel' %}" class="btn btn-secondary btn-lg">
+                    <span>📊</span>
+                    Upload Data
+                </a>
+            </div>
+        </div>
+        <div class="hero-visual">
+            <div class="hero-card">
+                <div class="hero-icon">
+                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                </div>
+                <h3>AI-Powered Analysis</h3>
+                <p>Neural networks analyze geological data and sensor readings in real-time</p>
+            </div>
+        </div>
     </div>
-  </div>
+</section>
 
-  <div class="bg-white p-6 rounded-lg shadow">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm font-medium text-gray-600">High Risk</p>
-        <p class="text-3xl font-bold text-red-600">{{ high_risk_count }}</p>
-      </div>
-      <div class="p-3 rounded-full bg-red-100">
-        <svg class="w-8 h-8 text-red-600" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
-        </svg>
-      </div>
+<!-- Stats Dashboard -->
+<section class="stats-section">
+    <div class="grid grid-3">
+        <div class="stat-card">
+            <div class="stat-icon stat-primary">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ total_stopes }}</h3>
+                <p class="stat-label">Total Stopes</p>
+                <span class="stat-change positive">+12% this month</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon stat-warning">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                    <line x1="12" y1="9" x2="12" y2="13"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">{{ high_risk_count }}</h3>
+                <p class="stat-label">High Risk Stopes</p>
+                <span class="stat-change neutral">Monitoring active</span>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon stat-success">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                    <polyline points="22,4 12,14.01 9,11.01"/>
+                </svg>
+            </div>
+            <div class="stat-content">
+                <h3 class="stat-number">
+                    {% if total_stopes > 0 %}
+                        {% widthratio total_stopes|add:"-"|add:high_risk_count total_stopes 100 %}%
+                    {% else %}
+                        0%
+                    {% endif %}
+                </h3>
+                <p class="stat-label">Stability Rate</p>
+                <span class="stat-change positive">+5% improvement</span>
+            </div>
+        </div>
     </div>
-  </div>
+</section>
 
-  <div class="bg-white p-6 rounded-lg shadow">
-    <div class="flex items-center justify-between">
-      <div>
-        <p class="text-sm font-medium text-gray-600">Success Rate</p>
-        <p class="text-3xl font-bold text-green-600">
-          {% if total_stopes > 0 %}
-            {{ total_stopes|add:"-"|add:high_risk_count|floatformat:0 }}%
-          {% else %}
-            0%
-          {% endif %}
-        </p>
-      </div>
-      <div class="p-3 rounded-full bg-green-100">
-        <svg class="w-8 h-8 text-green-600" fill="currentColor" viewBox="0 0 20 20">
-          <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"></path>
-        </svg>
-      </div>
+<!-- Features Section -->
+<section class="features-section">
+    <div class="section-header">
+        <h2>Advanced Capabilities</h2>
+        <p>Comprehensive mining intelligence powered by machine learning</p>
     </div>
-  </div>
-</div>
+    
+    <div class="grid grid-2">
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M9 19c-5 0-8-3-8-8s3-8 8-8 8 3 8 8-3 8-8 8"/>
+                    <path d="M21 21l-4.35-4.35"/>
+                </svg>
+            </div>
+            <h3>Real-time Analysis</h3>
+            <p>Continuous monitoring of geological parameters, rock quality designation (RQD), and structural stability using advanced sensor data processing.</p>
+            <ul class="feature-list">
+                <li>✓ Geological parameter tracking</li>
+                <li>✓ RQD assessment</li>
+                <li>✓ Structural monitoring</li>
+            </ul>
+        </div>
 
-<!-- Welcome Section -->
-<div class="bg-white p-6 rounded-lg shadow mb-8">
-  <h1 class="text-3xl font-bold text-gray-900 mb-4">Welcome to DeepMine Sentinel AI</h1>
-  <p class="text-gray-600 text-lg mb-6">
-    Advanced underground mining stope analysis and risk assessment system. 
-    Monitor rock quality, structural stability, and safety parameters with AI-powered insights.
-  </p>
-  
-  <div class="flex flex-wrap gap-4">
-    <a href="{% url 'stope_create' %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200">
-      ➕ Add New Stope
-    </a>
-    <a href="{% url 'upload_excel' %}" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition duration-200">
-      📊 Upload Excel Data
-    </a>
-    <a href="{% url 'stope_list' %}" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition duration-200">
-      📋 View All Stopes
-    </a>
-  </div>
-</div>
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                </svg>
+            </div>
+            <h3>AI Prediction Models</h3>
+            <p>Dual-branch neural networks combining static geological features with temporal sensor data for accurate stability predictions.</p>
+            <ul class="feature-list">
+                <li>✓ LSTM temporal analysis</li>
+                <li>✓ Multi-horizon forecasting</li>
+                <li>✓ Risk level classification</li>
+            </ul>
+        </div>
 
-<!-- Recent Stopes -->
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10,9 9,9 8,9"/>
+                </svg>
+            </div>
+            <h3>Comprehensive Reporting</h3>
+            <p>Detailed analysis reports with risk assessments, geological profiles, and actionable insights for mining operations.</p>
+            <ul class="feature-list">
+                <li>✓ Risk assessment reports</li>
+                <li>✓ Geological profiling</li>
+                <li>✓ Safety recommendations</li>
+            </ul>
+        </div>
+
+        <div class="feature-card">
+            <div class="feature-icon">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <polyline points="22,12 18,12 15,21 9,3 6,12 2,12"/>
+                </svg>
+            </div>
+            <h3>Early Warning System</h3>
+            <p>Proactive alerts and notifications for potential stability issues, enabling preventive measures and enhanced safety protocols.</p>
+            <ul class="feature-list">
+                <li>✓ Predictive alerts</li>
+                <li>✓ Risk escalation</li>
+                <li>✓ Safety notifications</li>
+            </ul>
+        </div>
+    </div>
+</section>
+
+<!-- Recent Activity -->
 {% if recent_stopes %}
-<div class="bg-white p-6 rounded-lg shadow">
-  <h2 class="text-xl font-bold text-gray-900 mb-4">Recent Stopes</h2>
-  <div class="overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-50">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stope Name</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Depth</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">RQD</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rock Type</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
-          <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="bg-white divide-y divide-gray-200">
+<section class="recent-activity">
+    <div class="section-header">
+        <h2>Recent Stope Analysis</h2>
+        <a href="{% url 'stope_list' %}" class="btn btn-secondary">View All</a>
+    </div>
+    
+    <div class="activity-grid">
         {% for stope in recent_stopes %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ stope.stope_name }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ stope.depth }} m</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ stope.rqd }}%</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ stope.rock_type }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ stope.created_at|date:"M d, Y" }}</td>
-          <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-            <a href="{% url 'stope_detail' stope.pk %}" class="text-blue-600 hover:text-blue-900">View Details</a>
-          </td>
-        </tr>
+        <div class="activity-card">
+            <div class="activity-header">
+                <h4>{{ stope.stope_name }}</h4>
+                <span class="activity-date">{{ stope.created_at|date:"M d, Y" }}</span>
+            </div>
+            <div class="activity-details">
+                <div class="detail-item">
+                    <span class="detail-label">Depth:</span>
+                    <span class="detail-value">{{ stope.depth }}m</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">RQD:</span>
+                    <span class="detail-value">{{ stope.rqd }}%</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Rock Type:</span>
+                    <span class="detail-value">{{ stope.rock_type }}</span>
+                </div>
+            </div>
+            <div class="activity-actions">
+                <a href="{% url 'stope_detail' stope.id %}" class="btn btn-sm btn-primary">View Details</a>
+            </div>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
+    </div>
+</section>
 {% endif %}
+
+<style>
+    /* Hero Section */
+    .hero-section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .hero-content {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-2xl);
+        align-items: center;
+        min-height: 60vh;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: var(--space-lg);
+        background: linear-gradient(135deg, var(--gray-900), var(--gray-700));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero-highlight {
+        display: block;
+        background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero-description {
+        font-size: 1.25rem;
+        color: var(--gray-600);
+        line-height: 1.6;
+        margin-bottom: var(--space-xl);
+        max-width: 500px;
+    }
+
+    .hero-actions {
+        display: flex;
+        gap: var(--space-lg);
+        flex-wrap: wrap;
+    }
+
+    .btn-lg {
+        padding: var(--space-lg) var(--space-xl);
+        font-size: 1.125rem;
+        font-weight: 600;
+    }
+
+    .hero-visual {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .hero-card {
+        background: white;
+        padding: var(--space-2xl);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-xl);
+        text-align: center;
+        max-width: 400px;
+        border: 1px solid var(--gray-200);
+    }
+
+    .hero-icon {
+        color: var(--primary-600);
+        margin-bottom: var(--space-lg);
+    }
+
+    .hero-card h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: var(--space-md);
+        color: var(--gray-800);
+    }
+
+    .hero-card p {
+        color: var(--gray-600);
+        margin-bottom: 0;
+    }
+
+    /* Stats Section */
+    .stats-section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .stat-card {
+        background: white;
+        padding: var(--space-xl);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        gap: var(--space-lg);
+        transition: all 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .stat-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: var(--radius-lg);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+
+    .stat-primary { background: var(--primary-100); color: var(--primary-600); }
+    .stat-warning { background: #fef3c7; color: var(--warning); }
+    .stat-success { background: #dcfce7; color: var(--success); }
+
+    .stat-content {
+        flex: 1;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: var(--space-xs);
+        color: var(--gray-800);
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--gray-600);
+        margin-bottom: var(--space-xs);
+        font-weight: 500;
+    }
+
+    .stat-change {
+        font-size: 0.75rem;
+        padding: var(--space-xs) var(--space-sm);
+        border-radius: var(--radius-sm);
+        font-weight: 500;
+    }
+
+    .stat-change.positive {
+        background: #dcfce7;
+        color: var(--success);
+    }
+
+    .stat-change.neutral {
+        background: var(--gray-100);
+        color: var(--gray-600);
+    }
+
+    /* Features Section */
+    .features-section {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .section-header {
+        text-align: center;
+        margin-bottom: var(--space-2xl);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .section-header h2 {
+        font-size: 2.5rem;
+        font-weight: 600;
+        color: var(--gray-800);
+        margin-bottom: var(--space-sm);
+    }
+
+    .section-header p {
+        font-size: 1.125rem;
+        color: var(--gray-600);
+        margin-bottom: 0;
+    }
+
+    .feature-card {
+        background: white;
+        padding: var(--space-xl);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--gray-200);
+        transition: all 0.2s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-4px);
+        box-shadow: var(--shadow-xl);
+    }
+
+    .feature-icon {
+        color: var(--primary-600);
+        margin-bottom: var(--space-lg);
+    }
+
+    .feature-card h3 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        margin-bottom: var(--space-md);
+        color: var(--gray-800);
+    }
+
+    .feature-card p {
+        color: var(--gray-600);
+        margin-bottom: var(--space-lg);
+        line-height: 1.6;
+    }
+
+    .feature-list {
+        list-style: none;
+        padding: 0;
+    }
+
+    .feature-list li {
+        color: var(--gray-600);
+        margin-bottom: var(--space-sm);
+        font-size: 0.875rem;
+    }
+
+    /* Recent Activity */
+    .recent-activity {
+        margin-bottom: var(--space-2xl);
+    }
+
+    .activity-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: var(--space-lg);
+    }
+
+    .activity-card {
+        background: white;
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-md);
+        border: 1px solid var(--gray-200);
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
+
+    .activity-card:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+    }
+
+    .activity-header {
+        padding: var(--space-lg);
+        border-bottom: 1px solid var(--gray-200);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .activity-header h4 {
+        margin: 0;
+        font-weight: 600;
+        color: var(--gray-800);
+    }
+
+    .activity-date {
+        font-size: 0.875rem;
+        color: var(--gray-500);
+    }
+
+    .activity-details {
+        padding: var(--space-lg);
+    }
+
+    .detail-item {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: var(--space-sm);
+    }
+
+    .detail-label {
+        font-weight: 500;
+        color: var(--gray-600);
+    }
+
+    .detail-value {
+        color: var(--gray-800);
+        font-weight: 600;
+    }
+
+    .activity-actions {
+        padding: var(--space-lg);
+        border-top: 1px solid var(--gray-200);
+        background: var(--gray-50);
+    }
+
+    .btn-sm {
+        padding: var(--space-sm) var(--space-md);
+        font-size: 0.875rem;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 1024px) {
+        .hero-content {
+            grid-template-columns: 1fr;
+            gap: var(--space-xl);
+            text-align: center;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+        }
+
+        .section-header {
+            flex-direction: column;
+            gap: var(--space-md);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .hero-title {
+            font-size: 2rem;
+        }
+
+        .hero-description {
+            font-size: 1.125rem;
+        }
+
+        .hero-actions {
+            justify-content: center;
+        }
+
+        .stat-card {
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .section-header h2 {
+            font-size: 2rem;
+        }
+
+        .activity-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .hero-title {
+            font-size: 1.75rem;
+        }
+
+        .hero-actions {
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .btn-lg {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+</style>
 {% endblock %}

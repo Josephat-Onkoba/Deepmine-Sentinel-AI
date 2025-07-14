@@ -7,6 +7,8 @@ from django.core.management.base import BaseCommand, CommandError
 from django.conf import settings
 import os
 import sys
+import json
+from datetime import datetime
 import tensorflow as tf
 from core.ml.models.dual_branch_stability_predictor import EnhancedDualBranchStabilityPredictor
 from core.utils import get_stope_profile_summary
@@ -76,7 +78,7 @@ class Command(BaseCommand):
                 )
 
             # Setup paths for datasets
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+            project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))  # Go to deepmine_sentinel_ai
             static_features_path = os.path.join(project_root, 'data', 'stope_static_features_aligned.csv')
             timeseries_path = os.path.join(project_root, 'data', 'stope_timeseries_data_aligned.csv')
             
@@ -138,6 +140,39 @@ class Command(BaseCommand):
                     )
                 )
 
+            # Save the trained model (CRITICAL FIX)
+            self.stdout.write("💾 Saving trained model and components...")
+            model_save_path = os.path.join(settings.BASE_DIR, 'models', 'enhanced_dual_branch_model.keras')
+            os.makedirs(os.path.dirname(model_save_path), exist_ok=True)
+            
+            try:
+                model.save_enhanced_model(model_save_path)
+                self.stdout.write(self.style.SUCCESS(f"✅ Model saved to: {model_save_path}"))
+                self.stdout.write(self.style.SUCCESS(f"✅ Components saved to: {model_save_path.replace('.keras', '_components.pkl')}"))
+                
+                # Save training metadata
+                metadata = {
+                    'training_date': datetime.now().isoformat(),
+                    'epochs': options['epochs'],
+                    'batch_size': options['batch_size'],
+                    'validation_split': options['validation_split'],
+                    'learning_rate': options['learning_rate'],
+                    'final_accuracy': history.history.get('val_accuracy', [0])[-1] if 'val_accuracy' in history.history else 0,
+                    'final_loss': history.history.get('val_loss', [0])[-1] if 'val_loss' in history.history else 0,
+                    'total_epochs_trained': len(history.history['loss']),
+                    'model_parameters': model.combined_model.count_params() if hasattr(model, 'combined_model') and model.combined_model else 0,
+                    'training_completed': True
+                }
+                
+                metadata_path = model_save_path.replace('.keras', '_metadata.json')
+                with open(metadata_path, 'w') as f:
+                    json.dump(metadata, f, indent=2)
+                self.stdout.write(self.style.SUCCESS(f"✅ Training metadata saved to: {metadata_path}"))
+                
+            except Exception as e:
+                self.stdout.write(self.style.ERROR(f"❌ Failed to save model: {str(e)}"))
+                raise CommandError(f"Model saving failed: {str(e)}")
+
             # Save enhanced plots if requested
             if options['save_plots']:
                 self.stdout.write("📈 Saving enhanced training plots...")
@@ -190,6 +225,14 @@ class Command(BaseCommand):
                 self.stdout.write(
                     self.style.WARNING(f"⚠️  Could not test predictions: {str(e)}")
                 )
+
+            # Save the trained model
+            self.stdout.write("💾 Saving the trained model...")
+            model_save_path = os.path.join(project_root, 'models', 'enhanced_dual_branch_model.h5')
+            model.save(model_save_path)
+            self.stdout.write(
+                self.style.SUCCESS(f"✅ Trained model saved to: {model_save_path}")
+            )
 
             self.stdout.write(
                 self.style.SUCCESS(

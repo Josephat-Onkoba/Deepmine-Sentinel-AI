@@ -1,0 +1,55 @@
+DeepMine Sentinel AI - Test Data Summary
+==================================================
+
+Generated on: 2025-07-14 04:46:35
+
+STATIC FEATURES DATASET
+------------------------------
+Total Stopes: 18
+Stable Stopes: 6
+Unstable Stopes: 12
+
+Rock Type Distribution:
+  Basalt: 5
+  Quartzite: 5
+  Granite: 4
+  Limestone: 2
+  Schist: 2
+
+Support Type Distribution:
+  Mesh: 7
+  Rock Bolts: 6
+  Shotcrete: 2
+  Cable Bolts: 2
+  Steel Sets: 1
+
+TIMESERIES DATASET
+------------------------------
+Total Records: 480
+Date Range: 2024-01-01 to 2024-06-10
+Unique Stopes: 18
+
+PARAMETER RANGES
+------------------------------
+rqd: 15.00 - 95.00
+hr: 2.50 - 19.46
+depth: 150.00 - 750.00
+dip: 38.87 - 82.19
+undercut_wdt: 2.21 - 7.79
+support_density: 0.24 - 0.95
+
+TIMESERIES PARAMETER RANGES
+------------------------------
+vibration_velocity: 0.17 - 4.32
+deformation_rate: 0.01 - 2.17
+stress: 11.20 - 95.36
+temperature: 18.00 - 27.00
+humidity: 43.30 - 82.92
+
+USAGE INSTRUCTIONS
+------------------------------
+1. Use test_stope_static_features.csv and test_stope_timeseries_data.csv for general model testing
+2. Use test_edge_cases_*.csv files for edge case validation
+3. Use validation_*.csv files for quick model validation
+4. All datasets follow the same structure as production data
+5. Edge cases include extreme stable, unstable, and borderline scenarios

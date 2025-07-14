@@ -1,0 +1,4 @@
+stope_name,rqd,hr,depth,dip,direction,undercut_wdt,rock_type,support_type,support_density,support_installed,stability
+Edge_Stable_001,95.0,2.5,150.0,45.0,North,3.0,Granite,Cable Bolts,0.95,1,1
+Edge_Unstable_001,15.0,18.0,750.0,80.0,Southwest,7.5,Schist,Mesh,0.25,0,0
+Edge_Borderline_001,50.0,10.0,400.0,60.0,East,5.0,Basalt,Rock Bolts,0.5,1,1

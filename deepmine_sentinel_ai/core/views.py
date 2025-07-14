@@ -7,7 +7,7 @@ from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
 from .models import Stope, StopeProfile, TimeSeriesUpload, TimeSeriesData, Prediction, PredictionFeedback, FuturePrediction, PredictionAlert
 from .forms import StopeForm, TimeSeriesUploadForm, TimeSeriesEntryForm
-from .utils import profile_stope, predict_stability_with_neural_network, TemporalStabilityPredictor
+from .utils import profile_stope
 from .ml_service import MLPredictionService
 import openpyxl
 from io import BytesIO
@@ -99,7 +99,7 @@ def stope_detail(request, pk):
             'stress', 'temperature', 'humidity'
         )))
     
-    # Enhanced ML prediction with temporal forecasting
+    # Enhanced ML prediction using enhanced MLPredictionService
     ml_prediction = None
     future_predictions = None
     ml_prediction_status = None
@@ -107,83 +107,63 @@ def stope_detail(request, pk):
     
     if has_timeseries:
         try:
-            # Prepare stope data for prediction
-            stope_data = {
-                'rqd': stope.rqd,
-                'hr': stope.hr,
-                'depth': stope.depth,
-                'dip': stope.dip,
-                'direction': ['North', 'Northeast', 'East', 'Southeast', 
-                             'South', 'Southwest', 'West', 'Northwest'].index(stope.direction),
-                'Undercut_wdt': stope.undercut_wdt,
-                'rock_type': ['Granite', 'Basalt', 'Obsidian', 'Shale', 'Marble', 
-                             'Slate', 'Gneiss', 'Schist', 'Quartzite', 'Limestone', 
-                             'Sandstone'].index(stope.rock_type),
-                'support_type': ['None', 'Rock Bolts', 'Mesh', 'Shotcrete', 
-                               'Timber', 'Cable Bolts', 'Steel Sets'].index(stope.support_type),
-                'support_density': stope.support_density,
-                'support_installed': int(stope.support_installed)
-            }
+            # Use the enhanced MLPredictionService for predictions
+            ml_service = MLPredictionService()
             
-            # Get comprehensive predictions (current + future)
-            prediction_results = predict_stability_with_neural_network(stope_data, timeseries_data)
-            
-            if prediction_results:
-                ml_prediction = prediction_results.get('current')
-                future_predictions = prediction_results.get('future', {})
-                ml_prediction_status = "available"
+            if ml_service.is_model_trained():
+                prediction_result = ml_service.predict_stope_stability(stope, save_prediction=False)
                 
-                # Save future predictions to database
-                for horizon_key, pred_data in future_predictions.items():
-                    try:
-                        # Check if prediction already exists for this timeframe
-                        existing_pred = FuturePrediction.objects.filter(
-                            stope=stope,
-                            days_ahead=pred_data['days_ahead'],
-                            created_at__date=timezone.now().date()
-                        ).first()
-                        
-                        if not existing_pred:
-                            future_pred = FuturePrediction.objects.create(
-                                stope=stope,
-                                prediction_type=pred_data['prediction_type'],
-                                prediction_for_date=pred_data['prediction_for_date'],
-                                days_ahead=pred_data['days_ahead'],
-                                risk_level=pred_data['risk_level'],
-                                confidence_score=pred_data['confidence_score'],
-                                risk_probability=pred_data['risk_probability'],
-                                contributing_factors=pred_data.get('contributing_factors', {}),
-                                explanation=pred_data['explanation'],
-                                recommended_actions=pred_data['recommended_actions'],
-                                model_version='v2.0'
-                            )
-                            
-                            # Generate alerts for high-risk predictions
-                            if pred_data['risk_level'] in ['high', 'critical', 'unstable']:
-                                severity_map = {
-                                    'high': 'high',
-                                    'critical': 'critical',
-                                    'unstable': 'critical'
-                                }
-                                
-                                alert = PredictionAlert.objects.create(
-                                    stope=stope,
-                                    future_prediction=future_pred,
-                                    alert_type='risk_increase',
-                                    severity=severity_map[pred_data['risk_level']],
-                                    title=f"High Risk Predicted in {pred_data['days_ahead']} Days",
-                                    message=f"Risk level projected to be {pred_data['risk_level']} "
-                                           f"with {pred_data['confidence_score']:.1%} confidence. "
-                                           f"Immediate action recommended: {pred_data['recommended_actions'][:100]}..."
-                                )
-                                alerts.append(alert)
+                if 'error' not in prediction_result:
+                    ml_prediction = {
+                        'prediction': prediction_result['prediction'],
+                        'risk_level': prediction_result['risk_level'],
+                        'confidence_score': prediction_result['confidence'],
+                        'explanation': prediction_result['explanation'],
+                        'model_type': prediction_result['model_info']['model_type'],
+                        'stable': prediction_result['prediction'] == 'Stable',
+                        'enhanced_mode': prediction_result['model_info'].get('enhanced_mode', False),
+                        'future_predictions': prediction_result.get('future_predictions', []),
+                        'risk_trend': prediction_result.get('risk_trend', 'stable'),
+                        'recommendations': prediction_result.get('recommendations', [])
+                    }
+                    ml_prediction_status = "available"
                     
+                    # Store future predictions for display
+                    future_predictions = prediction_result.get('future_predictions', [])
+                    
+                    # Create a Prediction record with enhanced data
+                    try:
+                        prediction_obj = Prediction.objects.create(
+                            stope=stope,
+                            risk_level=prediction_result['risk_level'],
+                            impact_score=prediction_result['confidence'],
+                            explanation=prediction_result['explanation']
+                        )
+                        
+                        # Save future predictions if available
+                        if future_predictions:
+                            for future_pred in future_predictions:
+                                FuturePrediction.objects.create(
+                                    stope=stope,
+                                    prediction_type=ml_service._map_horizon_to_type(future_pred['horizon_days']),
+                                    prediction_for_date=timezone.now() + timezone.timedelta(days=future_pred['horizon_days']),
+                                    days_ahead=future_pred['horizon_days'],
+                                    risk_level=future_pred['predicted_risk_level'],
+                                    confidence_score=future_pred['confidence'],
+                                    risk_probability=max(future_pred['risk_probabilities'].values()),
+                                    contributing_factors=future_pred.get('risk_probabilities', {}),
+                                    explanation=f"Enhanced ML prediction for {future_pred['horizon_days']} days ahead",
+                                    model_version=prediction_result['model_info'].get('version', 'v1.0')
+                                )
+                                
                     except Exception as e:
-                        logger.error(f"Error saving future prediction: {e}")
-                        continue
-                
+                        logger.error(f"Error saving enhanced prediction to database: {e}")
+                        
+                else:
+                    ml_prediction_status = "error"
+                    logger.warning(f"Enhanced ML prediction error for stope {pk}: {prediction_result['error']}")
             else:
-                ml_prediction_status = "error"
+                ml_prediction_status = "model_not_trained"
                 
         except Exception as e:
             logger.error(f"Error getting enhanced ML prediction for stope {pk}: {e}")
@@ -222,59 +202,40 @@ def stope_detail(request, pk):
                 
                 # 🎯 TRIGGER ENHANCED ML PREDICTION after adding time series data
                 try:
-                    # Prepare stope data
-                    stope_data = {
-                        'rqd': stope.rqd,
-                        'hr': stope.hr,
-                        'depth': stope.depth,
-                        'dip': stope.dip,
-                        'direction': ['North', 'Northeast', 'East', 'Southeast', 
-                                     'South', 'Southwest', 'West', 'Northwest'].index(stope.direction),
-                        'Undercut_wdt': stope.undercut_wdt,
-                        'rock_type': ['Granite', 'Basalt', 'Obsidian', 'Shale', 'Marble', 
-                                     'Slate', 'Gneiss', 'Schist', 'Quartzite', 'Limestone', 
-                                     'Sandstone'].index(stope.rock_type),
-                        'support_type': ['None', 'Rock Bolts', 'Mesh', 'Shotcrete', 
-                                       'Timber', 'Cable Bolts', 'Steel Sets'].index(stope.support_type),
-                        'support_density': stope.support_density,
-                        'support_installed': int(stope.support_installed)
-                    }
+                    ml_service = MLPredictionService()
                     
-                    # Get updated timeseries data
-                    import pandas as pd
-                    timeseries_queryset = stope.timeseries_data.all().order_by('timestamp')
-                    updated_timeseries = pd.DataFrame(list(timeseries_queryset.values(
-                        'timestamp', 'vibration_velocity', 'deformation_rate', 
-                        'stress', 'temperature', 'humidity'
-                    )))
-                    
-                    # Get enhanced predictions
-                    prediction_results = predict_stability_with_neural_network(stope_data, updated_timeseries)
-                    
-                    if prediction_results and 'current' in prediction_results:
-                        current_pred = prediction_results['current']
-                        future_preds = prediction_results.get('future', {})
+                    if ml_service.is_model_trained():
+                        prediction_result = ml_service.predict_stope_stability(stope, save_prediction=True)
                         
-                        # Show success message with current prediction
-                        messages.success(request, 
-                            f'Time series data added successfully! Current Risk: {current_pred["risk_level"]} '
-                            f'(Confidence: {current_pred["confidence_score"]:.1%})')
-                        
-                        # Show future prediction summary
-                        if future_preds:
-                            near_term = future_preds.get('3_days', {})
-                            if near_term:
-                                messages.info(request, 
-                                    f'3-day forecast: {near_term["risk_level"]} risk projected '
-                                    f'(Confidence: {near_term["confidence_score"]:.1%})')
+                        if 'error' not in prediction_result:
+                            # Enhanced success message with current prediction and future outlook
+                            future_info = ""
+                            if prediction_result.get('future_predictions'):
+                                next_risk = prediction_result['future_predictions'][0]
+                                future_info = f" | Next 24h: {next_risk['predicted_risk_level'].title()}"
+                            
+                            messages.success(request, 
+                                f'Time series data added successfully! Current Risk: {prediction_result["risk_level"]} '
+                                f'(Confidence: {prediction_result["confidence"]:.1%}){future_info}')
+                                
+                            # Add trend information
+                            if prediction_result.get('risk_trend'):
+                                trend_msg = f"Risk trend: {prediction_result['risk_trend']}"
+                                if prediction_result['risk_trend'] == 'increasing':
+                                    messages.warning(request, f"⚠️ {trend_msg} - Enhanced monitoring recommended")
+                                else:
+                                    messages.info(request, f"📊 {trend_msg}")
+                        else:
+                            messages.success(request, 'Time series data added successfully!')
+                            messages.warning(request, f'Enhanced ML prediction error: {prediction_result["error"]}')
                     else:
                         messages.success(request, 'Time series data added successfully!')
-                        messages.info(request, 'Enhanced predictions will be available once more data is collected.')
+                        messages.warning(request, 'Enhanced ML model is not trained. Predictions will be available once the model is trained.')
                         
                 except Exception as e:
-                    logger.error(f"Error generating enhanced prediction after time series addition: {e}")
+                    logger.error(f"Error generating enhanced ML prediction after time series addition: {e}")
                     messages.success(request, 'Time series data added successfully!')
-                    messages.warning(request, 'Could not generate enhanced ML prediction at this time.')
+                    messages.warning(request, 'Could not generate ML prediction at this time.')
                 
                 return redirect('stope_detail', pk=pk)
             else:
@@ -311,7 +272,7 @@ def stope_detail(request, pk):
         'timeseries_data': timeseries_data_display,
         'timeseries_uploads': timeseries_uploads,
         'ml_prediction': ml_prediction,
-        'future_predictions': existing_future_predictions,
+        'future_predictions': future_predictions,  # Enhanced future predictions
         'active_alerts': active_alerts,
         'ml_prediction_status': ml_prediction_status,
         'has_timeseries': has_timeseries,
@@ -479,7 +440,7 @@ def upload_excel(request):
 
 @require_http_methods(["POST"])
 def predict_stability(request, pk):
-    """AJAX endpoint for getting ML stability prediction for a stope"""
+    """Enhanced AJAX endpoint for getting ML stability prediction for a stope"""
     stope = get_object_or_404(Stope, pk=pk)
     
     try:
@@ -487,7 +448,7 @@ def predict_stability(request, pk):
         
         if not ml_service.is_model_trained():
             return JsonResponse({
-                'error': 'ML model is not trained or not available. Please ensure the model is trained first.',
+                'error': 'Enhanced ML model is not trained or not available. Please ensure the model is trained first.',
                 'success': False
             })
         
@@ -499,19 +460,31 @@ def predict_stability(request, pk):
                 'success': False
             })
         
-        return JsonResponse({
+        # Enhanced response with future predictions
+        response_data = {
             'success': True,
             'prediction': prediction_result['prediction'],
             'confidence': prediction_result['confidence'],
             'explanation': prediction_result['explanation'],
             'probabilities': prediction_result.get('probabilities', {}),
-            'model_info': prediction_result.get('model_info', {})
-        })
+            'model_info': prediction_result.get('model_info', {}),
+            'enhanced_mode': prediction_result['model_info'].get('enhanced_mode', False)
+        }
+        
+        # Add enhanced features if available
+        if 'future_predictions' in prediction_result:
+            response_data['future_predictions'] = prediction_result['future_predictions']
+        if 'risk_trend' in prediction_result:
+            response_data['risk_trend'] = prediction_result['risk_trend']
+        if 'recommendations' in prediction_result:
+            response_data['recommendations'] = prediction_result['recommendations']
+        
+        return JsonResponse(response_data)
         
     except Exception as e:
-        logger.error(f"Error in predict_stability for stope {pk}: {e}")
+        logger.error(f"Error in enhanced predict_stability for stope {pk}: {e}")
         return JsonResponse({
-            'error': f'An error occurred during prediction: {str(e)}',
+            'error': f'An error occurred during enhanced prediction: {str(e)}',
             'success': False
         })
 
@@ -549,29 +522,42 @@ def submit_prediction_feedback(request, prediction_id):
 
 
 def ml_dashboard(request):
-    """Dashboard showing ML model performance and statistics"""
+    """Enhanced dashboard showing ML model performance and statistics"""
     try:
         ml_service = MLPredictionService()
         
-        # Get model information
+        # Get enhanced model information
         if ml_service.is_model_trained():
             model_info = ml_service.get_model_performance_metrics()
             feature_importance = ml_service.get_feature_importance(top_n=10)
             is_model_trained = True
+            
+            # Get model health status
+            health_status = ml_service.validate_model_health()
         else:
-            model_info = {'error': 'Model is not trained or not available'}
+            model_info = {'error': 'Enhanced model is not trained or not available'}
             feature_importance = {}
             is_model_trained = False
+            health_status = {'overall_health': 'unhealthy', 'components': {}, 'recommendations': ['Train the enhanced model']}
             
     except Exception as e:
-        logger.error(f"Error accessing ML service: {e}")
-        model_info = {'error': f'Error accessing model: {str(e)}'}
+        logger.error(f"Error accessing enhanced ML service: {e}")
+        model_info = {'error': f'Error accessing enhanced model: {str(e)}'}
         feature_importance = {}
         is_model_trained = False
+        health_status = {'overall_health': 'error', 'error': str(e)}
     
-    # Get prediction statistics
+    # Get enhanced prediction statistics
     total_predictions = Prediction.objects.count()
     recent_predictions = Prediction.objects.order_by('-created_at')[:10]
+    
+    # Get future prediction statistics
+    total_future_predictions = FuturePrediction.objects.count()
+    recent_future_predictions = FuturePrediction.objects.order_by('-created_at')[:5]
+    
+    # Get active alerts
+    total_alerts = PredictionAlert.objects.count()
+    active_alerts = PredictionAlert.objects.filter(is_active=True).count()
     
     # Get feedback statistics
     total_feedback = PredictionFeedback.objects.count()
@@ -587,8 +573,13 @@ def ml_dashboard(request):
     context = {
         'model_info': model_info,
         'feature_importance': feature_importance,
+        'health_status': health_status,
         'total_predictions': total_predictions,
         'recent_predictions': recent_predictions,
+        'total_future_predictions': total_future_predictions,
+        'recent_future_predictions': recent_future_predictions,
+        'total_alerts': total_alerts,
+        'active_alerts': active_alerts,
         'total_feedback': total_feedback,
         'positive_feedback': positive_feedback,
         'negative_feedback': negative_feedback,
@@ -613,26 +604,30 @@ def batch_predict(request):
             ml_service = MLPredictionService()
             
             if not ml_service.is_model_trained():
-                messages.error(request, 'ML model is not trained or not available. Please ensure the model is trained first.')
+                messages.error(request, 'Enhanced ML model is not trained or not available. Please ensure the model is trained first.')
                 return redirect('batch_predict')
             
             # Convert to integers
             stope_ids = [int(sid) for sid in stope_ids]
             
-            # Get predictions
+            # Get enhanced predictions
             results = ml_service.predict_multiple_stopes(stope_ids)
             
             success_count = 0
             error_count = 0
+            enhanced_count = 0
             
             for stope_id, result in results.items():
                 if 'error' not in result:
                     success_count += 1
+                    if result.get('model_info', {}).get('enhanced_mode', False):
+                        enhanced_count += 1
                 else:
                     error_count += 1
             
             if success_count > 0:
-                messages.success(request, f'Generated predictions for {success_count} stopes.')
+                enhanced_msg = f" ({enhanced_count} enhanced)" if enhanced_count > 0 else ""
+                messages.success(request, f'Generated predictions for {success_count} stopes{enhanced_msg}.')
             if error_count > 0:
                 messages.warning(request, f'{error_count} predictions failed.')
             
@@ -777,52 +772,42 @@ def trigger_prediction_update(request, pk):
                 'error': 'No time series data available for prediction'
             })
         
-        # Prepare stope data
-        stope_data = {
-            'rqd': stope.rqd,
-            'hr': stope.hr,
-            'depth': stope.depth,
-            'dip': stope.dip,
-            'direction': ['North', 'Northeast', 'East', 'Southeast', 
-                         'South', 'Southwest', 'West', 'Northwest'].index(stope.direction),
-            'Undercut_wdt': stope.undercut_wdt,
-            'rock_type': ['Granite', 'Basalt', 'Obsidian', 'Shale', 'Marble', 
-                         'Slate', 'Gneiss', 'Schist', 'Quartzite', 'Limestone', 
-                         'Sandstone'].index(stope.rock_type),
-            'support_type': ['None', 'Rock Bolts', 'Mesh', 'Shotcrete', 
-                           'Timber', 'Cable Bolts', 'Steel Sets'].index(stope.support_type),
-            'support_density': stope.support_density,
-            'support_installed': int(stope.support_installed)
-        }
+        # Use enhanced MLPredictionService for predictions
+        ml_service = MLPredictionService()
         
-        # Get timeseries data
-        import pandas as pd
-        timeseries_queryset = stope.timeseries_data.all().order_by('timestamp')
-        timeseries_data = pd.DataFrame(list(timeseries_queryset.values(
-            'timestamp', 'vibration_velocity', 'deformation_rate', 
-            'stress', 'temperature', 'humidity'
-        )))
-        
-        # Get predictions
-        prediction_results = predict_stability_with_neural_network(stope_data, timeseries_data)
-        
-        if prediction_results:
-            current_pred = prediction_results.get('current')
-            future_preds = prediction_results.get('future', {})
-            
-            # Save new predictions (similar to the stope_detail view logic)
-            # ... (implementation similar to above)
-            
+        if not ml_service.is_model_trained():
             return JsonResponse({
-                'success': True,
-                'current_prediction': current_pred,
-                'future_predictions': {k: v for k, v in future_preds.items()},
-                'message': 'Predictions updated successfully'
+                'success': False,
+                'error': 'Enhanced ML model is not trained or not available'
             })
+        
+        # Get enhanced prediction
+        prediction_result = ml_service.predict_stope_stability(stope, save_prediction=True)
+        
+        if 'error' not in prediction_result:
+            response_data = {
+                'success': True,
+                'prediction': prediction_result['prediction'],
+                'risk_level': prediction_result['risk_level'],
+                'confidence': prediction_result['confidence'],
+                'explanation': prediction_result['explanation'],
+                'model_info': prediction_result['model_info'],
+                'message': 'Enhanced prediction updated successfully'
+            }
+            
+            # Add enhanced features if available
+            if 'future_predictions' in prediction_result:
+                response_data['future_predictions'] = prediction_result['future_predictions']
+            if 'risk_trend' in prediction_result:
+                response_data['risk_trend'] = prediction_result['risk_trend']
+            if 'recommendations' in prediction_result:
+                response_data['recommendations'] = prediction_result['recommendations']
+                
+            return JsonResponse(response_data)
         else:
             return JsonResponse({
                 'success': False,
-                'error': 'Failed to generate predictions'
+                'error': prediction_result['error']
             })
             
     except Exception as e:
@@ -830,6 +815,98 @@ def trigger_prediction_update(request, pk):
         return JsonResponse({
             'success': False,
             'error': str(e)
+        })
+
+
+@require_http_methods(["POST"])
+def train_enhanced_model(request):
+    """
+    Train the enhanced ML model with current data.
+    """
+    try:
+        ml_service = MLPredictionService()
+        
+        # Check model health first
+        health_status = ml_service.validate_model_health()
+        
+        if health_status['overall_health'] == 'error':
+            return JsonResponse({
+                'success': False,
+                'error': f"Model health check failed: {health_status.get('error', 'Unknown error')}"
+            })
+        
+        if health_status['overall_health'] == 'unhealthy':
+            return JsonResponse({
+                'success': False,
+                'error': 'Model cannot be trained due to missing components',
+                'recommendations': health_status.get('recommendations', [])
+            })
+        
+        # Start training
+        training_result = ml_service.train_model_with_current_data()
+        
+        if training_result.get('success', False):
+            return JsonResponse({
+                'success': True,
+                'message': training_result['message'],
+                'epochs': training_result.get('epochs', 'N/A'),
+                'final_accuracy': training_result.get('final_accuracy', 'N/A')
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'error': training_result.get('error', 'Training failed for unknown reason')
+            })
+            
+    except Exception as e:
+        logger.error(f"Error training enhanced model: {e}")
+        return JsonResponse({
+            'success': False,
+            'error': f'Training error: {str(e)}'
+        })
+
+
+def model_health_dashboard(request):
+    """
+    Dashboard for monitoring enhanced model health and status.
+    """
+    try:
+        ml_service = MLPredictionService()
+        
+        # Get comprehensive health status
+        health_status = ml_service.validate_model_health()
+        model_info = ml_service.get_model_performance_metrics() if ml_service.is_model_trained() else None
+        
+        # Get data file information
+        data_info = {
+            'static_csv_exists': os.path.exists(ml_service.static_csv_path),
+            'timeseries_csv_exists': os.path.exists(ml_service.timeseries_csv_path),
+            'models_dir_exists': os.path.exists(ml_service.models_dir)
+        }
+        
+        # Get recent training/prediction activity
+        recent_predictions = Prediction.objects.order_by('-created_at')[:5]
+        recent_future_predictions = FuturePrediction.objects.order_by('-created_at')[:5]
+        
+        context = {
+            'health_status': health_status,
+            'model_info': model_info,
+            'data_info': data_info,
+            'recent_predictions': recent_predictions,
+            'recent_future_predictions': recent_future_predictions,
+            'csv_paths': {
+                'static': ml_service.static_csv_path,
+                'timeseries': ml_service.timeseries_csv_path,
+                'models_dir': ml_service.models_dir
+            }
+        }
+        
+        return render(request, 'core/model_health_dashboard.html', context)
+        
+    except Exception as e:
+        logger.error(f"Error in model health dashboard: {e}")
+        return render(request, 'core/model_health_dashboard.html', {
+            'error': f'Error accessing model health information: {str(e)}'
         })
 
 # Continue with existing views...

@@ -1,15 +1,283 @@
-<!-- core/templates/core/navbar.html -->
-<nav class="bg-white shadow mb-8">
-  <div class="max-w-6xl mx-auto px-4">
-    <div class="flex justify-between items-center py-4">
-      <div class="text-xl font-bold text-blue-600">
-        <a href="{% url 'home' %}" class="hover:text-blue-800">DeepMine Sentinel</a>
-      </div>
-      <div class="space-x-4">
-        <a href="{% url 'stope_create' %}" class="text-gray-700 hover:text-blue-500">Add Stope</a>
-        <a href="{% url 'stope_list' %}" class="text-gray-700 hover:text-blue-500">Stopes</a>
-        <a href="{% url 'upload_excel' %}" class="text-gray-700 hover:text-blue-500">Upload Excel</a>
-      </div>
+<nav class="navbar">
+    <div class="container">
+        <div class="navbar-content">
+            <!-- Logo/Brand -->
+            <div class="navbar-brand">
+                <a href="{% url 'home' %}" class="brand-link">
+                    <div class="brand-icon">
+                        <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                            <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+                            <line x1="12" y1="22.08" x2="12" y2="12"/>
+                        </svg>
+                    </div>
+                    <span class="brand-text">DeepMine Sentinel</span>
+                </a>
+            </div>
+
+            <!-- Desktop Navigation -->
+            <div class="navbar-menu desktop-menu">
+                <a href="{% url 'home' %}" class="nav-link">
+                    <span class="nav-icon">🏠</span>
+                    Dashboard
+                </a>
+                <a href="{% url 'stope_create' %}" class="nav-link">
+                    <span class="nav-icon">➕</span>
+                    Add Stope
+                </a>
+                <a href="{% url 'stope_list' %}" class="nav-link">
+                    <span class="nav-icon">📋</span>
+                    Stopes
+                </a>
+                <a href="{% url 'upload_excel' %}" class="nav-link">
+                    <span class="nav-icon">📊</span>
+                    Upload
+                </a>
+            </div>
+
+            <!-- Mobile Menu Button -->
+            <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+                <span class="hamburger-line"></span>
+            </button>
+        </div>
+
+        <!-- Mobile Navigation -->
+        <div class="mobile-menu" id="mobileMenu">
+            <a href="{% url 'home' %}" class="mobile-nav-link">
+                <span class="nav-icon">🏠</span>
+                Dashboard
+            </a>
+            <a href="{% url 'stope_create' %}" class="mobile-nav-link">
+                <span class="nav-icon">➕</span>
+                Add Stope
+            </a>
+            <a href="{% url 'stope_list' %}" class="mobile-nav-link">
+                <span class="nav-icon">📋</span>
+                Stopes
+            </a>
+            <a href="{% url 'upload_excel' %}" class="mobile-nav-link">
+                <span class="nav-icon">📊</span>
+                Upload Excel
+            </a>
+        </div>
     </div>
-  </div>
+
+    <style>
+        .navbar {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--gray-200);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .navbar-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--space-md) 0;
+        }
+
+        /* Brand */
+        .brand-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            text-decoration: none;
+            color: var(--gray-800);
+            font-weight: 600;
+            font-size: 1.25rem;
+            transition: color 0.2s ease;
+        }
+
+        .brand-link:hover {
+            color: var(--primary-600);
+        }
+
+        .brand-icon {
+            color: var(--primary-600);
+            display: flex;
+            align-items: center;
+        }
+
+        .brand-text {
+            background: linear-gradient(135deg, var(--primary-600), var(--primary-700));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Desktop Menu */
+        .desktop-menu {
+            display: flex;
+            align-items: center;
+            gap: var(--space-lg);
+        }
+
+        .nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            padding: var(--space-sm) var(--space-md);
+            text-decoration: none;
+            color: var(--gray-600);
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .nav-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.1), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .nav-link:hover::before {
+            left: 100%;
+        }
+
+        .nav-link:hover {
+            color: var(--primary-600);
+            background: var(--primary-50);
+            transform: translateY(-1px);
+        }
+
+        .nav-icon {
+            font-size: 1.1rem;
+        }
+
+        /* Mobile Menu Button */
+        .mobile-menu-btn {
+            display: none;
+            flex-direction: column;
+            gap: 4px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: var(--space-sm);
+            border-radius: var(--radius-sm);
+            transition: background 0.2s ease;
+        }
+
+        .mobile-menu-btn:hover {
+            background: var(--gray-100);
+        }
+
+        .hamburger-line {
+            width: 24px;
+            height: 3px;
+            background: var(--gray-600);
+            border-radius: 2px;
+            transition: all 0.3s ease;
+        }
+
+        .mobile-menu-btn.active .hamburger-line:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .mobile-menu-btn.active .hamburger-line:nth-child(2) {
+            opacity: 0;
+        }
+
+        .mobile-menu-btn.active .hamburger-line:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        /* Mobile Menu */
+        .mobile-menu {
+            display: none;
+            flex-direction: column;
+            gap: var(--space-xs);
+            padding: var(--space-lg) 0;
+            border-top: 1px solid var(--gray-200);
+            background: white;
+        }
+
+        .mobile-nav-link {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            padding: var(--space-md);
+            text-decoration: none;
+            color: var(--gray-600);
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            transition: all 0.2s ease;
+            margin: 0 var(--space-sm);
+        }
+
+        .mobile-nav-link:hover {
+            color: var(--primary-600);
+            background: var(--primary-50);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .desktop-menu {
+                display: none;
+            }
+
+            .mobile-menu-btn {
+                display: flex;
+            }
+
+            .mobile-menu.active {
+                display: flex;
+            }
+
+            .brand-text {
+                display: none;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 0 var(--space-md);
+            }
+            
+            .navbar-content {
+                padding: var(--space-sm) 0;
+            }
+        }
+    </style>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenuBtn.classList.toggle('active');
+                mobileMenu.classList.toggle('active');
+            });
+
+            // Close mobile menu when clicking on a link
+            const mobileNavLinks = document.querySelectorAll('.mobile-nav-link');
+            mobileNavLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    mobileMenuBtn.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                });
+            });
+
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('.navbar')) {
+                    mobileMenuBtn.classList.remove('active');
+                    mobileMenu.classList.remove('active');
+                }
+            });
+        });
+    </script>
 </nav>

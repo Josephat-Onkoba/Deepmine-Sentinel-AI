@@ -131,38 +131,131 @@ def profile_stope(features):
 def get_stope_profile_summary(stope_name):
     """
     Generate a numerical summary vector from stope profile features.
-    This function extracts key numerical features that can be used
-    as additional inputs to machine learning models.
+    This function extracts key numerical features from real stope data
+    that can be used as additional inputs to machine learning models.
     
     :param stope_name: string, name of the stope
     :return: list of numerical features derived from profile analysis
     """
     try:
-        # In a production system, this would fetch actual stope data
-        # For now, we'll use synthetic features based on the stope name
+        # Load the static features data
+        project_root = os.path.dirname(os.path.dirname(__file__))  # Go up to deepmine_sentinel_ai directory
+        static_features_path = os.path.join(project_root, 'data', 'stope_static_features_aligned.csv')
         
-        # Generate pseudo-random but consistent features based on stope name
-        import hashlib
-        hash_val = int(hashlib.md5(stope_name.encode()).hexdigest()[:8], 16)
-        np.random.seed(hash_val % 1000)  # Ensure reproducible "random" values
+        if not os.path.exists(static_features_path):
+            logger.warning(f"Static features file not found: {static_features_path}")
+            return [0.5, 0.3, 0.6, 0.7, 0.4, 0.5, 0.3, 0.6, 0.5, 0.4]
         
-        # Generate realistic profile summary features
+        # Read the CSV file
+        static_df = pd.read_csv(static_features_path)
+        
+        # Find the stope data
+        stope_data = static_df[static_df['stope_name'] == stope_name]
+        if stope_data.empty:
+            logger.warning(f"Stope {stope_name} not found in static features data")
+            return [0.5, 0.3, 0.6, 0.7, 0.4, 0.5, 0.3, 0.6, 0.5, 0.4]
+        
+        row = stope_data.iloc[0]
+        
+        # Calculate meaningful numerical features based on real data
+        
+        # 1. Stability Score (0-1): Based on RQD and actual stability label
+        rqd = float(row['rqd'])
+        actual_stability = int(row['stability']) if 'stability' in row else 0.5
+        stability_score = min(1.0, max(0.0, (rqd / 100.0) * 0.7 + actual_stability * 0.3))
+        
+        # 2. Risk Level (0-1): Inverse of stability, considering multiple factors
+        hr = float(row['hr'])
+        depth = float(row['depth'])
+        support_installed = int(row['support_installed'])
+        
+        # Higher HR and depth increase risk, support reduces it
+        risk_components = [
+            1.0 - (rqd / 100.0),  # Poor RQD increases risk
+            min(1.0, hr / 15.0),  # Large HR increases risk (normalized to max 15)
+            min(1.0, depth / 1000.0),  # Deep stopes increase risk (normalized to max 1000m)
+            0.0 if support_installed else 0.3  # No support adds significant risk
+        ]
+        risk_level = min(1.0, np.mean(risk_components))
+        
+        # 3. Complexity Index (0-1): Based on geometric and geological complexity
+        dip = float(row['dip'])
+        undercut_wdt = float(row['undercut_wdt'])
+        
+        # Steep dips and wide undercuts increase complexity
+        complexity_index = min(1.0, (dip / 90.0) * 0.5 + min(1.0, undercut_wdt / 10.0) * 0.3 + (hr / 15.0) * 0.2)
+        
+        # 4. Support Adequacy (0-1): Based on support type, density, and installation
+        support_density = float(row['support_density'])
+        support_type = str(row['support_type'])
+        
+        # Support type strength mapping
+        support_strength = {
+            'None': 0.0, 'Mesh': 0.3, 'Rock Bolts': 0.6, 'Shotcrete': 0.7,
+            'Steel Sets': 0.8, 'Cable Bolts': 0.9, 'Timber': 0.4
+        }
+        
+        type_factor = support_strength.get(support_type, 0.5)
+        support_adequacy = min(1.0, (type_factor * 0.6 + support_density * 0.4) if support_installed else 0.1)
+        
+        # 5. Geological Factor (0-1): Based on rock type and RQD
+        rock_type = str(row['rock_type'])
+        
+        # Rock strength mapping (higher values = stronger rock)
+        rock_strength = {
+            'Granite': 0.9, 'Basalt': 0.8, 'Quartzite': 0.85, 'Schist': 0.6,
+            'Gneiss': 0.7, 'Marble': 0.75, 'Slate': 0.65, 'Shale': 0.4,
+            'Limestone': 0.7, 'Sandstone': 0.6, 'Obsidian': 0.8
+        }
+        
+        rock_factor = rock_strength.get(rock_type, 0.6)
+        geological_factor = min(1.0, (rock_factor * 0.6 + (rqd / 100.0) * 0.4))
+        
+        # 6. Structural Factor (0-1): Based on dip, direction, and hydraulic radius
+        direction = str(row['direction'])
+        
+        # Direction stability factor (some orientations are more stable)
+        direction_stability = {
+            'North': 0.8, 'Northeast': 0.7, 'East': 0.75, 'Southeast': 0.7,
+            'South': 0.8, 'Southwest': 0.6, 'West': 0.75, 'Northwest': 0.65
+        }
+        
+        dir_factor = direction_stability.get(direction, 0.7)
+        # Moderate dips (45-75°) are often less stable
+        dip_factor = 1.0 - abs(dip - 45) / 90.0 if 30 <= dip <= 80 else 0.8
+        structural_factor = min(1.0, (dir_factor * 0.4 + dip_factor * 0.3 + (1.0 - hr/15.0) * 0.3))
+        
+        # 7. Environmental Factor (0-1): Depth-based (deeper = more challenging environment)
+        environmental_factor = max(0.1, 1.0 - (depth / 1000.0))
+        
+        # 8. Maintenance Factor (0-1): Based on support adequacy and accessibility
+        # Shallower stopes with good support are easier to maintain
+        maintenance_factor = min(1.0, (environmental_factor * 0.4 + support_adequacy * 0.6))
+        
+        # 9. Historical Performance (0-1): Based on current stability and geological factors
+        historical_performance = min(1.0, (stability_score * 0.6 + geological_factor * 0.4))
+        
+        # 10. Monitoring Coverage (0-1): Estimated based on depth and complexity
+        # Assume better monitoring for less complex, shallower stopes
+        monitoring_coverage = max(0.3, min(1.0, environmental_factor * 0.6 + (1.0 - complexity_index) * 0.4))
+        
         profile_summary = [
-            np.random.uniform(0.4, 0.9),   # stability_score (0-1)
-            np.random.uniform(0.1, 0.8),   # risk_level (0-1)
-            np.random.uniform(0.3, 0.9),   # complexity_index (0-1)
-            np.random.uniform(0.5, 1.0),   # support_adequacy (0-1)
-            np.random.uniform(0.2, 0.7),   # geological_factor (0-1)
-            np.random.uniform(0.3, 0.8),   # structural_factor (0-1)
-            np.random.uniform(0.1, 0.6),   # environmental_factor (0-1)
-            np.random.uniform(0.4, 0.9),   # maintenance_factor (0-1)
-            np.random.uniform(0.2, 0.8),   # historical_performance (0-1)
-            np.random.uniform(0.3, 0.7),   # monitoring_coverage (0-1)
+            float(stability_score),        # 0: stability_score (0-1)
+            float(risk_level),             # 1: risk_level (0-1)
+            float(complexity_index),       # 2: complexity_index (0-1)
+            float(support_adequacy),       # 3: support_adequacy (0-1)
+            float(geological_factor),      # 4: geological_factor (0-1)
+            float(structural_factor),      # 5: structural_factor (0-1)
+            float(environmental_factor),   # 6: environmental_factor (0-1)
+            float(maintenance_factor),     # 7: maintenance_factor (0-1)
+            float(historical_performance), # 8: historical_performance (0-1)
+            float(monitoring_coverage)     # 9: monitoring_coverage (0-1)
         ]
         
         return profile_summary
         
     except Exception as e:
+        logger.error(f"Error calculating profile summary for {stope_name}: {e}")
         # Return default profile summary if there's an error
         return [0.5, 0.3, 0.6, 0.7, 0.4, 0.5, 0.3, 0.6, 0.5, 0.4]
 
@@ -214,393 +307,6 @@ def get_stope_features_for_ml(stope_name, static_df):
         print(f"Error extracting features for stope {stope_name}: {e}")
         return None
 
-# ============================================================================
-# Enhanced Temporal Prediction System
-# ============================================================================
-
-class TemporalStabilityPredictor:
-    """
-    Advanced temporal stability prediction system that uses time series data
-    to predict future stope stability risks.
-    """
-    
-    def __init__(self, model_path='models/', model_version='v2.0'):
-        self.model_path = model_path
-        self.model_version = model_version
-        self.model = None
-        self.scaler = None
-        self.label_encoder = None
-        self.time_window = 30  # Days of historical data to consider
-        self.prediction_horizons = [1, 3, 7, 14, 30]  # Days ahead to predict
-        
-        # Risk level mappings
-        self.risk_levels = ['stable', 'slight_elevated', 'elevated', 'high', 'critical', 'unstable']
-        self.risk_to_numeric = {level: idx for idx, level in enumerate(self.risk_levels)}
-        self.numeric_to_risk = {idx: level for idx, level in enumerate(self.risk_levels)}
-        
-        # Load or initialize model
-        self._load_or_initialize_model()
-    
-    def _load_or_initialize_model(self):
-        """Load existing model or initialize new one"""
-        try:
-            model_file = os.path.join(self.model_path, f'temporal_model_{self.model_version}.h5')
-            scaler_file = os.path.join(self.model_path, f'temporal_scaler_{self.model_version}.pkl')
-            
-            if os.path.exists(model_file) and os.path.exists(scaler_file):
-                self.model = tf.keras.models.load_model(model_file)
-                self.scaler = joblib.load(scaler_file)
-                logger.info(f"Loaded temporal model {self.model_version}")
-            else:
-                logger.info("Creating new temporal model")
-                self._create_temporal_model()
-                
-        except Exception as e:
-            logger.error(f"Error loading model: {e}")
-            self._create_temporal_model()
-    
-    def _create_temporal_model(self):
-        """Create new temporal prediction model"""
-        # LSTM-based model for time series prediction
-        self.model = tf.keras.Sequential([
-            tf.keras.layers.LSTM(128, return_sequences=True, input_shape=(self.time_window, 15)),
-            tf.keras.layers.Dropout(0.2),
-            tf.keras.layers.LSTM(64, return_sequences=True),
-            tf.keras.layers.Dropout(0.2),
-            tf.keras.layers.LSTM(32),
-            tf.keras.layers.Dropout(0.2),
-            tf.keras.layers.Dense(64, activation='relu'),
-            tf.keras.layers.Dense(32, activation='relu'),
-            tf.keras.layers.Dense(len(self.prediction_horizons) * len(self.risk_levels), activation='softmax')
-        ])
-        
-        self.model.compile(
-            optimizer='adam',
-            loss='categorical_crossentropy',
-            metrics=['accuracy', 'precision', 'recall']
-        )
-        
-        # Initialize scaler
-        self.scaler = StandardScaler()
-    
-    def prepare_temporal_features(self, stope_data: Dict, timeseries_data: pd.DataFrame) -> np.ndarray:
-        """
-        Prepare temporal features combining static stope data with time series
-        """
-        try:
-            # Static features (repeated for each time step)
-            static_features = [
-                stope_data.get('rqd', 0),
-                stope_data.get('hr', 0),
-                stope_data.get('depth', 0),
-                stope_data.get('dip', 0),
-                stope_data.get('direction', 0),
-                stope_data.get('Undercut_wdt', 0),
-                stope_data.get('rock_type', 0),
-                stope_data.get('support_type', 0),
-                stope_data.get('support_density', 0),
-                stope_data.get('support_installed', 0)
-            ]
-            
-            # Prepare time series features
-            if timeseries_data is not None and not timeseries_data.empty:
-                # Sort by timestamp
-                timeseries_data = timeseries_data.sort_values('timestamp')
-                
-                # Take last time_window days
-                recent_data = timeseries_data.tail(self.time_window)
-                
-                # Temporal features for each time step
-                temporal_features = []
-                for _, row in recent_data.iterrows():
-                    step_features = static_features + [
-                        row.get('vibration_velocity', 0) or 0,
-                        row.get('deformation_rate', 0) or 0,
-                        row.get('stress', 0) or 0,
-                        row.get('temperature', 0) or 0,
-                        row.get('humidity', 0) or 0,
-                    ]
-                    temporal_features.append(step_features)
-                
-                # Pad or truncate to time_window
-                while len(temporal_features) < self.time_window:
-                    temporal_features.insert(0, static_features + [0, 0, 0, 0, 0])
-                temporal_features = temporal_features[-self.time_window:]
-                
-            else:
-                # No time series data, use static features only
-                temporal_features = [static_features + [0, 0, 0, 0, 0]] * self.time_window
-            
-            return np.array(temporal_features)
-            
-        except Exception as e:
-            logger.error(f"Error preparing temporal features: {e}")
-            # Return default features
-            default_features = [0] * 15
-            return np.array([default_features] * self.time_window)
-    
-    def predict_future_stability(self, stope_data: Dict, timeseries_data: pd.DataFrame) -> Dict:
-        """
-        Predict future stability for multiple time horizons
-        """
-        try:
-            # Prepare features
-            features = self.prepare_temporal_features(stope_data, timeseries_data)
-            features = features.reshape(1, self.time_window, -1)
-            
-            # Scale features if scaler is fitted
-            if hasattr(self.scaler, 'mean_'):
-                features_2d = features.reshape(-1, features.shape[-1])
-                features_scaled = self.scaler.transform(features_2d)
-                features = features_scaled.reshape(1, self.time_window, -1)
-            
-            # Make prediction
-            prediction = self.model.predict(features, verbose=0)
-            
-            # Reshape prediction to separate horizons
-            prediction = prediction.reshape(len(self.prediction_horizons), len(self.risk_levels))
-            
-            # Process predictions for each horizon
-            predictions = {}
-            current_date = datetime.now()
-            
-            for i, days_ahead in enumerate(self.prediction_horizons):
-                horizon_pred = prediction[i]
-                
-                # Get most likely risk level
-                risk_idx = np.argmax(horizon_pred)
-                risk_level = self.numeric_to_risk[risk_idx]
-                confidence = float(horizon_pred[risk_idx])
-                
-                # Calculate prediction date
-                prediction_date = current_date + timedelta(days=days_ahead)
-                
-                # Determine prediction type
-                if days_ahead <= 3:
-                    pred_type = 'short_term'
-                elif days_ahead <= 14:
-                    pred_type = 'medium_term'
-                else:
-                    pred_type = 'long_term'
-                
-                # Generate explanation based on contributing factors
-                explanation = self._generate_temporal_explanation(
-                    risk_level, days_ahead, stope_data, timeseries_data
-                )
-                
-                # Generate recommendations
-                recommendations = self._generate_recommendations(risk_level, days_ahead)
-                
-                predictions[f"{days_ahead}_days"] = {
-                    'prediction_type': pred_type,
-                    'days_ahead': days_ahead,
-                    'prediction_for_date': prediction_date,
-                    'risk_level': risk_level,
-                    'confidence_score': confidence,
-                    'risk_probability': float(np.sum(horizon_pred[3:])),  # High risk and above
-                    'all_probabilities': {
-                        level: float(horizon_pred[idx]) 
-                        for idx, level in enumerate(self.risk_levels)
-                    },
-                    'explanation': explanation,
-                    'recommended_actions': recommendations,
-                    'contributing_factors': self._identify_contributing_factors(
-                        stope_data, timeseries_data, risk_level
-                    )
-                }
-            
-            return predictions
-            
-        except Exception as e:
-            logger.error(f"Error in future stability prediction: {e}")
-            return self._get_default_predictions()
-    
-    def _generate_temporal_explanation(self, risk_level: str, days_ahead: int, 
-                                     stope_data: Dict, timeseries_data: pd.DataFrame) -> str:
-        """Generate human-readable explanation for temporal prediction"""
-        
-        explanations = {
-            'stable': f"Based on current conditions and trend analysis, the stope is projected to remain stable over the next {days_ahead} days. Monitoring parameters show normal patterns.",
-            
-            'slight_elevated': f"Analysis indicates a slight increase in stability risk over the next {days_ahead} days. While conditions remain generally acceptable, enhanced monitoring is recommended.",
-            
-            'elevated': f"Predictive models suggest elevated stability concerns developing over the next {days_ahead} days. Multiple risk factors are showing trending patterns that warrant attention.",
-            
-            'high': f"High stability risk is projected for {days_ahead} days ahead. Current trends in monitoring data suggest deteriorating conditions that require immediate intervention planning.",
-            
-            'critical': f"Critical stability conditions are forecasted within {days_ahead} days. Multiple indicators show alarming trends that demand immediate action and enhanced safety measures.",
-            
-            'unstable': f"Unstable conditions are predicted within {days_ahead} days. The combination of geological factors and monitoring trends indicates imminent stability failure risk."
-        }
-        
-        base_explanation = explanations.get(risk_level, "Risk assessment based on current data trends.")
-        
-        # Add specific factors if available
-        if timeseries_data is not None and not timeseries_data.empty:
-            recent_data = timeseries_data.tail(7)  # Last week
-            
-            trend_info = []
-            if 'vibration_velocity' in recent_data.columns:
-                vibration_trend = recent_data['vibration_velocity'].diff().mean()
-                if vibration_trend > 0.1:
-                    trend_info.append("increasing vibration levels")
-                elif vibration_trend < -0.1:
-                    trend_info.append("decreasing vibration levels")
-            
-            if 'deformation_rate' in recent_data.columns:
-                deformation_trend = recent_data['deformation_rate'].diff().mean()
-                if deformation_trend > 0.05:
-                    trend_info.append("accelerating deformation")
-                elif deformation_trend < -0.05:
-                    trend_info.append("stabilizing deformation")
-            
-            if trend_info:
-                base_explanation += f" Key trends observed: {', '.join(trend_info)}."
-        
-        return base_explanation
-    
-    def _generate_recommendations(self, risk_level: str, days_ahead: int) -> str:
-        """Generate specific recommendations based on risk level and timeframe"""
-        
-        recommendations = {
-            'stable': [
-                "Continue routine monitoring schedule",
-                "Maintain current safety protocols",
-                "Schedule regular visual inspections"
-            ],
-            'slight_elevated': [
-                "Increase monitoring frequency by 25%",
-                "Review recent operational changes",
-                "Prepare contingency plans",
-                "Brief operational teams on status"
-            ],
-            'elevated': [
-                "Increase monitoring frequency by 50%",
-                "Conduct detailed geological assessment",
-                "Review and update safety procedures",
-                "Consider additional support installation",
-                "Restrict non-essential access"
-            ],
-            'high': [
-                "Implement daily monitoring protocols",
-                "Evacuate non-essential personnel",
-                "Install additional monitoring equipment",
-                "Prepare immediate support reinforcement",
-                "Activate emergency response protocols"
-            ],
-            'critical': [
-                "Implement continuous monitoring",
-                "Evacuate all non-critical personnel immediately",
-                "Deploy emergency support systems",
-                "Activate full emergency response",
-                "Suspend all non-emergency operations"
-            ],
-            'unstable': [
-                "IMMEDIATE EVACUATION of all personnel",
-                "Deploy emergency stabilization measures",
-                "Activate full emergency response",
-                "Suspend ALL operations in affected areas",
-                "Implement continuous remote monitoring"
-            ]
-        }
-        
-        base_recs = recommendations.get(risk_level, ["Monitor conditions closely"])
-        
-        # Add time-specific recommendations
-        if days_ahead <= 1:
-            base_recs.insert(0, "URGENT: Implement recommendations within 24 hours")
-        elif days_ahead <= 3:
-            base_recs.insert(0, "Implement recommendations within 72 hours")
-        elif days_ahead <= 7:
-            base_recs.insert(0, "Plan implementation within one week")
-        
-        return "; ".join(base_recs)
-    
-    def _identify_contributing_factors(self, stope_data: Dict, timeseries_data: pd.DataFrame, 
-                                     risk_level: str) -> Dict:
-        """Identify factors contributing to the risk prediction"""
-        
-        factors = {
-            'geological': [],
-            'operational': [],
-            'environmental': [],
-            'temporal': []
-        }
-        
-        # Geological factors
-        rqd = stope_data.get('rqd', 0)
-        if rqd < 50:
-            factors['geological'].append(f"Poor rock quality (RQD: {rqd}%)")
-        elif rqd < 70:
-            factors['geological'].append(f"Moderate rock quality (RQD: {rqd}%)")
-        
-        hr = stope_data.get('hr', 0)
-        if hr > 8:
-            factors['geological'].append(f"Large span opening (HR: {hr})")
-        
-        depth = stope_data.get('depth', 0)
-        if depth > 500:
-            factors['geological'].append(f"Deep location ({depth}m)")
-        
-        # Support factors
-        support_installed = stope_data.get('support_installed', 0)
-        if not support_installed:
-            factors['operational'].append("No engineered support installed")
-        else:
-            support_density = stope_data.get('support_density', 0)
-            if support_density < 0.5:
-                factors['operational'].append("Insufficient support density")
-        
-        # Time series factors
-        if timeseries_data is not None and not timeseries_data.empty:
-            recent_data = timeseries_data.tail(7)
-            
-            if 'vibration_velocity' in recent_data.columns:
-                avg_vibration = recent_data['vibration_velocity'].mean()
-                if avg_vibration > 10:
-                    factors['temporal'].append(f"High vibration levels ({avg_vibration:.1f} mm/s)")
-            
-            if 'deformation_rate' in recent_data.columns:
-                avg_deformation = recent_data['deformation_rate'].mean()
-                if avg_deformation > 5:
-                    factors['temporal'].append(f"High deformation rate ({avg_deformation:.1f} mm/day)")
-            
-            if 'stress' in recent_data.columns:
-                avg_stress = recent_data['stress'].mean()
-                if avg_stress > 50:
-                    factors['temporal'].append(f"Elevated stress levels ({avg_stress:.1f} MPa)")
-        
-        return factors
-    
-    def _get_default_predictions(self) -> Dict:
-        """Return default predictions when model fails"""
-        current_date = datetime.now()
-        
-        predictions = {}
-        for days_ahead in self.prediction_horizons:
-            prediction_date = current_date + timedelta(days=days_ahead)
-            
-            if days_ahead <= 3:
-                pred_type = 'short_term'
-            elif days_ahead <= 14:
-                pred_type = 'medium_term'
-            else:
-                pred_type = 'long_term'
-            
-            predictions[f"{days_ahead}_days"] = {
-                'prediction_type': pred_type,
-                'days_ahead': days_ahead,
-                'prediction_for_date': prediction_date,
-                'risk_level': 'stable',
-                'confidence_score': 0.5,
-                'risk_probability': 0.1,
-                'explanation': "Default prediction due to insufficient data or model error.",
-                'recommended_actions': "Collect more monitoring data and review model performance.",
-                'contributing_factors': {'system': ['Insufficient data for reliable prediction']}
-            }
-        
-        return predictions
-
 # Backward compatibility function
 def predict_stability_with_neural_network(stope_data: Dict, timeseries_data: pd.DataFrame = None) -> Dict:
     """
@@ -611,20 +317,21 @@ def predict_stability_with_neural_network(stope_data: Dict, timeseries_data: pd.
         from core.ml.models.dual_branch_stability_predictor import EnhancedDualBranchStabilityPredictor
         
         # Initialize model with default paths
-        project_root = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))
+        project_root = os.path.dirname(os.path.dirname(__file__))  # Go up to deepmine_sentinel_ai directory
         static_features_path = os.path.join(project_root, 'data', 'stope_static_features_aligned.csv')
         timeseries_path = os.path.join(project_root, 'data', 'stope_timeseries_data_aligned.csv')
         
         if not os.path.exists(static_features_path) or not os.path.exists(timeseries_path):
-            # Fallback to temporal predictor
-            predictor = TemporalStabilityPredictor()
-            future_predictions = predictor.predict_future_stability(stope_data, timeseries_data)
-            current_prediction = get_stability_prediction_simple(stope_data)
-            
+            # Return error if data files are missing
             return {
-                'current': current_prediction,
-                'future': future_predictions,
-                'model_type': 'Temporal LSTM (Fallback)',
+                'current': {
+                    'error': 'Training data files not found. Neural network model requires aligned CSV data files.',
+                    'model_type': 'Neural Network (Data Missing)'
+                },
+                'future': {
+                    'error': 'Training data files not found. Neural network model requires aligned CSV data files.'
+                },
+                'model_type': 'Neural Network (Data Missing)',
                 'prediction_timestamp': datetime.now().isoformat()
             }
         
@@ -654,27 +361,32 @@ def predict_stability_with_neural_network(stope_data: Dict, timeseries_data: pd.
                     'prediction_timestamp': prediction_result['timestamp']
                 }
         
-        # If no trained model available, fallback to simpler methods
-        predictor = TemporalStabilityPredictor()
-        future_predictions = predictor.predict_future_stability(stope_data, timeseries_data)
-        current_prediction = get_stability_prediction_simple(stope_data)
-        
+        # If no trained model available, return error
         return {
-            'current': current_prediction,
-            'future': future_predictions,
-            'model_type': 'Temporal LSTM + Rule-based (Model not trained)',
+            'current': {
+                'error': 'Neural network model not available. Please ensure the dual-branch stability model is trained.',
+                'model_type': 'Neural Network (Not Available)'
+            },
+            'future': {
+                'error': 'Neural network model not available. Please ensure the dual-branch stability model is trained.'
+            },
+            'model_type': 'Neural Network (Model not trained)',
             'prediction_timestamp': datetime.now().isoformat()
         }
         
     except Exception as e:
         logger.error(f"Error in enhanced neural network prediction: {e}")
         
-        # Ultimate fallback
-        current_prediction = get_stability_prediction_simple(stope_data)
+        # Return error for neural network failures
         return {
-            'current': current_prediction,
-            'future': {'error': str(e)},
-            'model_type': 'Rule-based (Fallback)',
+            'current': {
+                'error': f'Neural network prediction failed: {str(e)}',
+                'model_type': 'Neural Network (Error)'
+            },
+            'future': {
+                'error': f'Neural network prediction failed: {str(e)}'
+            },
+            'model_type': 'Neural Network (Fallback Error)',
             'prediction_timestamp': datetime.now().isoformat()
         }
 
@@ -721,39 +433,16 @@ def get_stability_prediction_simple(stope_data: Dict) -> Dict:
                     'model_type': 'Neural Network'
                 }
         
-        # Fallback to rule-based prediction
-            return get_rule_based_prediction(stope_data)
+        # If model is not available, return error
+        return {
+            'error': 'Neural network model not available. Please ensure the dual-branch stability model is trained and accessible.',
+            'model_type': 'Neural Network (Not Available)'
+        }
             
     except Exception as e:
         logger.error(f"Error in neural network prediction: {e}")
-        return get_rule_based_prediction(stope_data)
+        return {
+            'error': f'Neural network prediction failed: {str(e)}',
+            'model_type': 'Neural Network (Error)'
+        }
 
-def get_rule_based_prediction(stope_data: Dict) -> Dict:
-    """
-    Rule-based prediction fallback
-    """
-    rqd = stope_data.get('rqd', 0)
-    hr = stope_data.get('hr', 0)
-    support_installed = stope_data.get('support_installed', 0)
-    support_density = stope_data.get('support_density', 0)
-    
-    # Simple rule-based logic
-    if rqd < 50 and hr > 8 and not support_installed:
-        risk_level = 'high'
-        confidence = 0.8
-    elif rqd < 65 and hr > 6:
-        risk_level = 'elevated'
-        confidence = 0.7
-    elif support_installed and support_density > 0.8:
-        risk_level = 'stable'
-        confidence = 0.75
-    else:
-        risk_level = 'slight_elevated'
-        confidence = 0.6
-    
-    return {
-        'risk_level': risk_level,
-        'confidence_score': confidence,
-        'explanation': f"Rule-based assessment: RQD={rqd}%, HR={hr}, Support={'Yes' if support_installed else 'No'}",
-        'model_type': 'Rule-Based Fallback'
-    }

@@ -1,4 +1,237 @@
-<!-- core/templates/core/footer.html -->
-<footer class="bg-white shadow mt-8 py-4 text-center text-sm text-gray-500">
-  &copy; {% now "Y" %} DeepMine Sentinel AI. All rights reserved.
+<footer class="footer">
+    <div class="container">
+        <div class="footer-content">
+            <!-- Brand Section -->
+            <div class="footer-brand">
+                <div class="footer-logo">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+                        <polyline points="3.27,6.96 12,12.01 20.73,6.96"/>
+                        <line x1="12" y1="22.08" x2="12" y2="12"/>
+                    </svg>
+                    <span>DeepMine Sentinel AI</span>
+                </div>
+                <p class="footer-description">
+                    Advanced underground mining stope analysis and risk assessment system powered by artificial intelligence.
+                </p>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="footer-links">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="{% url 'home' %}">Dashboard</a></li>
+                    <li><a href="{% url 'stope_create' %}">Add Stope</a></li>
+                    <li><a href="{% url 'stope_list' %}">View Stopes</a></li>
+                    <li><a href="{% url 'upload_excel' %}">Upload Data</a></li>
+                </ul>
+            </div>
+
+            <!-- Features -->
+            <div class="footer-links">
+                <h4>Features</h4>
+                <ul>
+                    <li>AI-Powered Analysis</li>
+                    <li>Risk Assessment</li>
+                    <li>Real-time Monitoring</li>
+                    <li>Data Visualization</li>
+                </ul>
+            </div>
+
+            <!-- Contact -->
+            <div class="footer-contact">
+                <h4>Technology</h4>
+                <div class="tech-stack">
+                    <span class="tech-badge">Django</span>
+                    <span class="tech-badge">TensorFlow</span>
+                    <span class="tech-badge">LSTM</span>
+                    <span class="tech-badge">Neural Networks</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer Bottom -->
+        <div class="footer-bottom">
+            <div class="footer-copyright">
+                <p>&copy; {% now "Y" %} DeepMine Sentinel AI. All rights reserved.</p>
+                <p class="footer-note">Built for mining safety and operational excellence.</p>
+            </div>
+            <div class="footer-version">
+                <span class="version-badge">v2.0</span>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .footer {
+            background: linear-gradient(135deg, var(--gray-900) 0%, var(--gray-800) 100%);
+            color: var(--gray-300);
+            margin-top: var(--space-2xl);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--primary-500), transparent);
+        }
+
+        .footer-content {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: var(--space-2xl);
+            padding: var(--space-2xl) 0;
+        }
+
+        .footer-brand {
+            max-width: 300px;
+        }
+
+        .footer-logo {
+            display: flex;
+            align-items: center;
+            gap: var(--space-md);
+            margin-bottom: var(--space-lg);
+            color: white;
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        .footer-logo svg {
+            color: var(--primary-500);
+        }
+
+        .footer-description {
+            color: var(--gray-400);
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+
+        .footer-links h4 {
+            color: white;
+            font-weight: 600;
+            margin-bottom: var(--space-lg);
+            font-size: 1rem;
+        }
+
+        .footer-links ul {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: var(--space-sm);
+        }
+
+        .footer-links a {
+            color: var(--gray-400);
+            text-decoration: none;
+            transition: color 0.2s ease;
+            font-size: 0.875rem;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary-400);
+        }
+
+        .footer-contact h4 {
+            color: white;
+            font-weight: 600;
+            margin-bottom: var(--space-lg);
+            font-size: 1rem;
+        }
+
+        .tech-stack {
+            display: flex;
+            flex-direction: column;
+            gap: var(--space-sm);
+        }
+
+        .tech-badge {
+            display: inline-block;
+            background: var(--primary-600);
+            color: white;
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+            width: fit-content;
+        }
+
+        .footer-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-lg) 0;
+            border-top: 1px solid var(--gray-700);
+        }
+
+        .footer-copyright p {
+            margin: 0;
+            color: var(--gray-400);
+            font-size: 0.875rem;
+        }
+
+        .footer-note {
+            color: var(--gray-500) !important;
+            font-size: 0.75rem !important;
+            margin-top: var(--space-xs) !important;
+        }
+
+        .version-badge {
+            background: var(--gray-700);
+            color: var(--gray-300);
+            padding: var(--space-xs) var(--space-sm);
+            border-radius: var(--radius-sm);
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .footer-content {
+                grid-template-columns: 1fr 1fr;
+                gap: var(--space-xl);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .footer-content {
+                grid-template-columns: 1fr;
+                gap: var(--space-lg);
+                padding: var(--space-xl) 0;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: var(--space-md);
+                text-align: center;
+            }
+
+            .tech-stack {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .footer-content {
+                padding: var(--space-lg) 0;
+            }
+
+            .footer-logo {
+                flex-direction: column;
+                text-align: center;
+                gap: var(--space-sm);
+            }
+
+            .footer-bottom {
+                padding: var(--space-md) 0;
+            }
+        }
+    </style>
 </footer>

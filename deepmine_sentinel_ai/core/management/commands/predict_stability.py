@@ -45,10 +45,20 @@ class Command(BaseCommand):
         )
         
         try:
-            # Setup paths for datasets
-            project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+            # Setup paths for datasets with robust path resolution
+            project_root = getattr(settings, 'BASE_DIR', None)
+            if project_root is None:
+                # Fallback to relative path calculation
+                project_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+            
             static_features_path = os.path.join(project_root, 'data', 'stope_static_features_aligned.csv')
             timeseries_path = os.path.join(project_root, 'data', 'stope_timeseries_data_aligned.csv')
+            
+            # Verify that data files exist
+            if not os.path.exists(static_features_path):
+                raise CommandError(f"❌ Static features file not found at {static_features_path}")
+            if not os.path.exists(timeseries_path):
+                raise CommandError(f"❌ Timeseries data file not found at {timeseries_path}")
             
             # Check if trained model exists
             model_path = os.path.join(project_root, 'core', 'ml', 'models', 'saved', 'dual_branch_stability_model.h5')

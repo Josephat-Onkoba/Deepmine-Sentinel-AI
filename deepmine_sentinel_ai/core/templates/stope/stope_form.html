@@ -4,195 +4,233 @@
 {% block title %}Add Stope{% endblock %}
 
 {% block content %}
-<div class="max-w-2xl mx-auto">
-  <h1 class="text-3xl font-bold text-gray-900 mb-6">Enter Stope Details</h1>
-  
+<div class="main-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="flex items-center space-x-4">
+        <div class="icon-circle bg-primary-light">
+          <span class="material-icons">add_location</span>
+        </div>
+        <div>
+          <h1 class="page-title">Add New Stope</h1>
+          <p class="page-subtitle">Enter geological and structural details for the stope</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Messages -->
   {% if messages %}
     {% for message in messages %}
-      <div class="mb-4 p-4 rounded-lg {% if message.tags == 'error' %}bg-red-100 text-red-700{% elif message.tags == 'success' %}bg-green-100 text-green-700{% else %}bg-blue-100 text-blue-700{% endif %}">
+      <div class="alert {% if message.tags == 'error' %}alert-danger{% elif message.tags == 'success' %}alert-success{% else %}alert-info{% endif %} mb-6">
+        <span class="material-icons">
+          {% if message.tags == 'error' %}error
+          {% elif message.tags == 'success' %}check_circle
+          {% else %}info
+          {% endif %}
+        </span>
         {{ message }}
       </div>
     {% endfor %}
   {% endif %}
 
-  <form method="POST" class="bg-white p-8 rounded-lg shadow-lg space-y-6">
-    {% csrf_token %}
-    
-    <!-- Basic Information -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div>
-        <label for="{{ form.stope_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-          Stope Name <span class="text-red-500">*</span>
-        </label>
-        {{ form.stope_name }}
-        {% if form.stope_name.help_text %}
-          <p class="mt-1 text-sm text-gray-500">{{ form.stope_name.help_text }}</p>
-        {% endif %}
-        {% if form.stope_name.errors %}
-          <p class="mt-1 text-sm text-red-600">{{ form.stope_name.errors.0 }}</p>
-        {% endif %}
+  <div class="max-w-4xl mx-auto">
+    <form method="POST" class="card">
+      {% csrf_token %}
+      
+      <div class="card-header">
+        <h2 class="card-title">
+          <span class="material-icons">info</span>
+          Stope Information
+        </h2>
       </div>
+      
+      <div class="card-body space-y-8">
+        <!-- Basic Information -->
+        <div class="form-section">
+          <h3 class="form-section-title">Basic Information</h3>
+          <div class="form-grid grid-cols-2">
+            <div class="form-group">
+              <label for="{{ form.stope_name.id_for_label }}" class="form-label required">
+                Stope Name
+              </label>
+              {{ form.stope_name }}
+              {% if form.stope_name.help_text %}
+                <p class="form-help">{{ form.stope_name.help_text }}</p>
+              {% endif %}
+              {% if form.stope_name.errors %}
+                <p class="form-error">{{ form.stope_name.errors.0 }}</p>
+              {% endif %}
+            </div>
 
-      <div>
-        <label for="{{ form.rock_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-          Rock Type <span class="text-red-500">*</span>
-        </label>
-        {{ form.rock_type }}
-        {% if form.rock_type.help_text %}
-          <p class="mt-1 text-sm text-gray-500">{{ form.rock_type.help_text }}</p>
-        {% endif %}
-        {% if form.rock_type.errors %}
-          <p class="mt-1 text-sm text-red-600">{{ form.rock_type.errors.0 }}</p>
-        {% endif %}
+            <div class="form-group">
+              <label for="{{ form.rock_type.id_for_label }}" class="form-label required">
+                Rock Type
+              </label>
+              {{ form.rock_type }}
+              {% if form.rock_type.help_text %}
+                <p class="form-help">{{ form.rock_type.help_text }}</p>
+              {% endif %}
+              {% if form.rock_type.errors %}
+                <p class="form-error">{{ form.rock_type.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <!-- Geological Parameters -->
+        <div class="form-section">
+          <h3 class="form-section-title">Geological Parameters</h3>
+          <div class="form-grid grid-cols-3">
+            <div class="form-group">
+              <label for="{{ form.rqd.id_for_label }}" class="form-label required">
+                RQD (%)
+              </label>
+              {{ form.rqd }}
+              {% if form.rqd.help_text %}
+                <p class="form-help">{{ form.rqd.help_text }}</p>
+              {% endif %}
+              {% if form.rqd.errors %}
+                <p class="form-error">{{ form.rqd.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label for="{{ form.depth.id_for_label }}" class="form-label required">
+                Depth (m)
+              </label>
+              {{ form.depth }}
+              {% if form.depth.help_text %}
+                <p class="form-help">{{ form.depth.help_text }}</p>
+              {% endif %}
+              {% if form.depth.errors %}
+                <p class="form-error">{{ form.depth.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label for="{{ form.dip.id_for_label }}" class="form-label required">
+                Dip (°)
+              </label>
+              {{ form.dip }}
+              {% if form.dip.help_text %}
+                <p class="form-help">{{ form.dip.help_text }}</p>
+              {% endif %}
+              {% if form.dip.errors %}
+                <p class="form-error">{{ form.dip.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label for="{{ form.direction.id_for_label }}" class="form-label required">
+                Direction
+              </label>
+              {{ form.direction }}
+              {% if form.direction.help_text %}
+                <p class="form-help">{{ form.direction.help_text }}</p>
+              {% endif %}
+              {% if form.direction.errors %}
+                <p class="form-error">{{ form.direction.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label for="{{ form.hr.id_for_label }}" class="form-label required">
+                Hydraulic Radius
+              </label>
+              {{ form.hr }}
+              {% if form.hr.help_text %}
+                <p class="form-help">{{ form.hr.help_text }}</p>
+              {% endif %}
+              {% if form.hr.errors %}
+                <p class="form-error">{{ form.hr.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label for="{{ form.undercut_wdt.id_for_label }}" class="form-label required">
+                Undercut Width (m)
+              </label>
+              {{ form.undercut_wdt }}
+              {% if form.undercut_wdt.help_text %}
+                <p class="form-help">{{ form.undercut_wdt.help_text }}</p>
+              {% endif %}
+              {% if form.undercut_wdt.errors %}
+                <p class="form-error">{{ form.undercut_wdt.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Support System -->
+        <div class="form-section">
+          <h3 class="form-section-title">Support System</h3>
+          <div class="form-grid grid-cols-3">
+            <div class="form-group">
+              <label for="{{ form.support_type.id_for_label }}" class="form-label required">
+                Support Type
+              </label>
+              {{ form.support_type }}
+              {% if form.support_type.help_text %}
+                <p class="form-help">{{ form.support_type.help_text }}</p>
+              {% endif %}
+              {% if form.support_type.errors %}
+                <p class="form-error">{{ form.support_type.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label for="{{ form.support_density.id_for_label }}" class="form-label required">
+                Support Density
+              </label>
+              {{ form.support_density }}
+              {% if form.support_density.help_text %}
+                <p class="form-help">{{ form.support_density.help_text }}</p>
+              {% endif %}
+              {% if form.support_density.errors %}
+                <p class="form-error">{{ form.support_density.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="form-group">
+              <label for="{{ form.support_installed.id_for_label }}" class="form-label">
+                Support Installed
+              </label>
+              <div class="checkbox-wrapper">
+                {{ form.support_installed }}
+                <span class="checkbox-label">Yes, support is installed</span>
+              </div>
+              {% if form.support_installed.help_text %}
+                <p class="form-help">{{ form.support_installed.help_text }}</p>
+              {% endif %}
+              {% if form.support_installed.errors %}
+                <p class="form-error">{{ form.support_installed.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary btn-lg">
+            <span class="material-icons">save</span>
+            Save Stope
+          </button>
+          <a href="{% url 'stope_list' %}" class="btn btn-secondary btn-lg">
+            <span class="material-icons">cancel</span>
+            Cancel
+          </a>
+        </div>
       </div>
-    </div>
-
-    <!-- Geological Parameters -->
-    <fieldset class="border border-gray-200 rounded-lg p-4">
-      <legend class="text-lg font-medium text-gray-900 px-2">Geological Parameters</legend>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-        <div>
-          <label for="{{ form.rqd.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            RQD (%) <span class="text-red-500">*</span>
-          </label>
-          {{ form.rqd }}
-          {% if form.rqd.help_text %}
-            <p class="mt-1 text-sm text-gray-500">{{ form.rqd.help_text }}</p>
-          {% endif %}
-          {% if form.rqd.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.rqd.errors.0 }}</p>
-          {% endif %}
-        </div>
-
-        <div>
-          <label for="{{ form.depth.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Depth (m) <span class="text-red-500">*</span>
-          </label>
-          {{ form.depth }}
-          {% if form.depth.help_text %}
-            <p class="mt-1 text-sm text-gray-500">{{ form.depth.help_text }}</p>
-          {% endif %}
-          {% if form.depth.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.depth.errors.0 }}</p>
-          {% endif %}
-        </div>
-
-        <div>
-          <label for="{{ form.dip.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Dip (°) <span class="text-red-500">*</span>
-          </label>
-          {{ form.dip }}
-          {% if form.dip.help_text %}
-            <p class="mt-1 text-sm text-gray-500">{{ form.dip.help_text }}</p>
-          {% endif %}
-          {% if form.dip.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.dip.errors.0 }}</p>
-          {% endif %}
-        </div>
-      </div>
-
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-        <div>
-          <label for="{{ form.direction.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Direction <span class="text-red-500">*</span>
-          </label>
-          {{ form.direction }}
-          {% if form.direction.help_text %}
-            <p class="mt-1 text-sm text-gray-500">{{ form.direction.help_text }}</p>
-          {% endif %}
-          {% if form.direction.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.direction.errors.0 }}</p>
-          {% endif %}
-        </div>
-
-        <div>
-          <label for="{{ form.hr.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Hydraulic Radius <span class="text-red-500">*</span>
-          </label>
-          {{ form.hr }}
-          {% if form.hr.help_text %}
-            <p class="mt-1 text-sm text-gray-500">{{ form.hr.help_text }}</p>
-          {% endif %}
-          {% if form.hr.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.hr.errors.0 }}</p>
-          {% endif %}
-        </div>
-
-        <div>
-          <label for="{{ form.undercut_wdt.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Undercut Width (m) <span class="text-red-500">*</span>
-          </label>
-          {{ form.undercut_wdt }}
-          {% if form.undercut_wdt.help_text %}
-            <p class="mt-1 text-sm text-gray-500">{{ form.undercut_wdt.help_text }}</p>
-          {% endif %}
-          {% if form.undercut_wdt.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.undercut_wdt.errors.0 }}</p>
-          {% endif %}
-        </div>
-      </div>
-    </fieldset>
-
-    <!-- Support System -->
-    <fieldset class="border border-gray-200 rounded-lg p-4">
-      <legend class="text-lg font-medium text-gray-900 px-2">Support System</legend>
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
-        <div>
-          <label for="{{ form.support_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Support Type <span class="text-red-500">*</span>
-          </label>
-          {{ form.support_type }}
-          {% if form.support_type.help_text %}
-            <p class="mt-1 text-sm text-gray-500">{{ form.support_type.help_text }}</p>
-          {% endif %}
-          {% if form.support_type.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.support_type.errors.0 }}</p>
-          {% endif %}
-        </div>
-
-        <div>
-          <label for="{{ form.support_density.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            Support Density <span class="text-red-500">*</span>
-          </label>
-          {{ form.support_density }}
-          {% if form.support_density.help_text %}
-            <p class="mt-1 text-sm text-gray-500">{{ form.support_density.help_text }}</p>
-          {% endif %}
-          {% if form.support_density.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.support_density.errors.0 }}</p>
-          {% endif %}
-        </div>
-
-        <div class="flex items-center mt-6">
-          {{ form.support_installed }}
-          <label for="{{ form.support_installed.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
-            Support Installed
-          </label>
-          {% if form.support_installed.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ form.support_installed.errors.0 }}</p>
-          {% endif %}
-        </div>
-      </div>
-    </fieldset>
-
-    <!-- Submit Button -->
-    <div class="flex justify-end space-x-4">
-      <a href="{% url 'home' %}" class="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition duration-200">
-        Cancel
-      </a>
-      <button type="submit" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">
-        Create Stope
-      </button>
-    </div>
-  </form>
-</div>
+    </form>
+  </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     const supportTypeField = document.getElementById('{{ form.support_type.id_for_label }}');
     const supportDensityField = document.getElementById('{{ form.support_density.id_for_label }}');
     const supportInstalledField = document.getElementById('{{ form.support_installed.id_for_label }}');
-    const supportDensityContainer = supportDensityField.closest('div');
+    const supportDensityContainer = supportDensityField.closest('.form-group');
     
     function updateSupportFields() {
         const selectedSupportType = supportTypeField.value;
@@ -202,27 +240,24 @@ document.addEventListener('DOMContentLoaded', function() {
             supportDensityField.removeAttribute('required');
             supportDensityField.value = '';
             supportDensityField.disabled = true;
-            supportDensityField.style.backgroundColor = '#f3f4f6';
+            supportDensityField.style.backgroundColor = 'var(--gray-100)';
             supportDensityField.style.cursor = 'not-allowed';
             
             supportInstalledField.checked = false;
             supportInstalledField.disabled = true;
             
-            // Update visual indicators - hide required asterisk
-            const supportDensityLabel = supportDensityContainer.querySelector('label');
-            if (supportDensityLabel) {
-                const requiredSpan = supportDensityLabel.querySelector('.text-red-500');
-                if (requiredSpan) {
-                    requiredSpan.style.display = 'none';
-                }
+            // Update visual indicators
+            const label = supportDensityContainer.querySelector('.form-label');
+            if (label) {
+                label.classList.remove('required');
                 
                 // Add optional text
-                let optionalText = supportDensityLabel.querySelector('.optional-text');
+                let optionalText = label.querySelector('.optional-text');
                 if (!optionalText) {
                     optionalText = document.createElement('span');
-                    optionalText.className = 'optional-text text-gray-500 text-sm ml-1';
+                    optionalText.className = 'optional-text text-gray-500 text-sm ml-2';
                     optionalText.textContent = '(optional when no support)';
-                    supportDensityLabel.appendChild(optionalText);
+                    label.appendChild(optionalText);
                 }
             }
             
@@ -236,16 +271,13 @@ document.addEventListener('DOMContentLoaded', function() {
             supportInstalledField.checked = true;
             supportInstalledField.disabled = false;
             
-            // Update visual indicators - show required asterisk
-            const supportDensityLabel = supportDensityContainer.querySelector('label');
-            if (supportDensityLabel) {
-                const requiredSpan = supportDensityLabel.querySelector('.text-red-500');
-                if (requiredSpan) {
-                    requiredSpan.style.display = 'inline';
-                }
+            // Update visual indicators
+            const label = supportDensityContainer.querySelector('.form-label');
+            if (label) {
+                label.classList.add('required');
                 
                 // Remove optional text
-                const optionalText = supportDensityLabel.querySelector('.optional-text');
+                const optionalText = label.querySelector('.optional-text');
                 if (optionalText) {
                     optionalText.remove();
                 }
@@ -260,29 +292,4 @@ document.addEventListener('DOMContentLoaded', function() {
     supportTypeField.addEventListener('change', updateSupportFields);
 });
 </script>
-
-<style>
-  .form-control {
-    width: 100%;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid #d1d5db;
-    border-radius: 0.375rem;
-    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  }
-  .form-control:focus {
-    outline: none;
-    box-shadow: 0 0 0 2px #3b82f6;
-    border-color: #3b82f6;
-  }
-  .form-check-input {
-    height: 1rem;
-    width: 1rem;
-    color: #3b82f6;
-    border-radius: 0.25rem;
-    border: 1px solid #d1d5db;
-  }
-  .form-check-input:focus {
-    box-shadow: 0 0 0 2px #3b82f6;
-  }
-</style>
 {% endblock %}

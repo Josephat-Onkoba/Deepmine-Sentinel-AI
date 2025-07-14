@@ -4,305 +4,544 @@
 {% block title %}Stope Details - {{ stope.stope_name }}{% endblock %}
 
 {% block content %}
-<div class="container mx-auto px-4 py-6">
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-800 mb-2">{{ stope.stope_name }}</h1>
-        <p class="text-gray-600">Created: {{ stope.created_at|date:"M d, Y" }}</p>
+<div class="main-container">
+    <!-- Page Header -->
+    <div class="page-header">
+        <div class="header-content">
+            <div class="flex items-center space-x-4">
+                <div class="icon-circle bg-primary-light">
+                    <span class="material-icons">terrain</span>
+                </div>
+                <div>
+                    <h1 class="page-title">{{ stope.stope_name }}</h1>
+                    <p class="page-subtitle">Created {{ stope.created_at|date:"M d, Y" }}</p>
+                </div>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'stope_list' %}" class="btn btn-secondary">
+                    <span class="material-icons">arrow_back</span>
+                    Back to List
+                </a>
+                <button onclick="generatePrediction()" class="btn btn-primary">
+                    <span class="material-icons">psychology</span>
+                    Predict Stability
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Static Features Section -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Static Features</h2>
-            <div class="grid grid-cols-2 gap-4 text-sm">
-                <div><strong>Depth:</strong> {{ stope.depth }} m</div>
-                <div><strong>RQD:</strong> {{ stope.rqd }}%</div>
-                <div><strong>Hydraulic Radius:</strong> {{ stope.hr }}</div>
-                <div><strong>Dip:</strong> {{ stope.dip }}°</div>
-                <div><strong>Direction:</strong> {{ stope.direction }}</div>
-                <div><strong>Undercut Width:</strong> {{ stope.undercut_wdt }} m</div>
-                <div><strong>Rock Type:</strong> {{ stope.rock_type }}</div>
-                <div><strong>Support Type:</strong> {{ stope.support_type }}</div>
-                <div><strong>Support Density:</strong> {{ stope.support_density }}</div>
-                <div><strong>Support Installed:</strong> {% if stope.support_installed %}Yes{% else %}No{% endif %}</div>
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="material-icons">assessment</span>
+                    Static Features
+                </h2>
+            </div>
+            <div class="card-body">
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <span class="feature-label">Depth</span>
+                        <span class="feature-value">{{ stope.depth }} m</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">RQD</span>
+                        <span class="feature-value">{{ stope.rqd }}%</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Hydraulic Radius</span>
+                        <span class="feature-value">{{ stope.hr }}</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Dip</span>
+                        <span class="feature-value">{{ stope.dip }}°</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Direction</span>
+                        <span class="feature-value">{{ stope.direction }}</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Undercut Width</span>
+                        <span class="feature-value">{{ stope.undercut_wdt }} m</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Rock Type</span>
+                        <span class="feature-value">{{ stope.rock_type }}</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Support Type</span>
+                        <span class="feature-value">{{ stope.support_type }}</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Support Density</span>
+                        <span class="feature-value">{{ stope.support_density }}</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-label">Support Installed</span>
+                        <span class="feature-value">
+                            {% if stope.support_installed %}
+                                <span class="badge badge-success">Yes</span>
+                            {% else %}
+                                <span class="badge badge-secondary">No</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-semibold text-gray-800 mb-4">Stope Profile Summary</h2>
-            <div class="bg-gray-50 p-4 rounded text-sm font-mono whitespace-pre-wrap">{{ profile }}</div>
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">
+                    <span class="material-icons">analytics</span>
+                    Stope Profile Summary
+                </h2>
+            </div>
+            <div class="card-body">
+                <div class="code-block">{{ profile }}</div>
+            </div>
         </div>
     </div>
 
-    <!-- ML Prediction Section -->
-    <div class="bg-white p-6 rounded-lg shadow mb-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-4 flex items-center">
-            <span class="mr-2">🤖</span>
-            AI Stability Prediction
-        </h2>
-        
-        {% if ml_prediction %}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Prediction Result -->
-                <div class="space-y-4">
-                    <div class="flex items-center space-x-3">
-                        <span class="text-sm font-medium text-gray-600">Risk Level:</span>
-                        <span class="px-3 py-1 rounded-full text-sm font-medium
-                            {% if ml_prediction.prediction == 'Stable' %}bg-green-100 text-green-800
-                            {% elif ml_prediction.prediction == 'Elevated Risk' %}bg-yellow-100 text-yellow-800
-                            {% elif ml_prediction.prediction == 'High Risk' %}bg-orange-100 text-orange-800
-                            {% elif ml_prediction.prediction == 'Unstable' %}bg-red-100 text-red-800
-                            {% endif %}">
-                            {{ ml_prediction.prediction }}
-                        </span>
-                    </div>
-                    
-                    <div class="flex items-center space-x-3">
-                        <span class="text-sm font-medium text-gray-600">Confidence:</span>
-                        <div class="flex-1">
-                            <div class="bg-gray-200 rounded-full h-2">
-                                <div class="bg-blue-600 h-2 rounded-full" 
-                                     data-width="{{ ml_prediction.confidence|floatformat:0 }}"></div>
+    <!-- Enhanced ML Prediction Section -->
+    <div class="card mb-8">
+        <div class="card-header">
+            <h2 class="card-title">
+                <span class="material-icons">psychology</span>
+                AI Stability Prediction & Risk Analysis
+            </h2>
+        </div>
+        <div class="card-body">
+            {% if ml_prediction %}
+                <!-- Current Prediction Overview -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                    <!-- Current Risk Assessment -->
+                    <div class="bg-gradient-to-br from-blue-50 to-indigo-100 p-6 rounded-lg border border-blue-200">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">🎯 Current Risk Assessment</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-600">Stability Status:</span>
+                                <span class="badge badge-lg
+                                    {% if ml_prediction.stable %}badge-success
+                                    {% else %}badge-danger
+                                    {% endif %}">
+                                    {% if ml_prediction.stable %}✅ Stable
+                                    {% else %}⚠️ Unstable
+                                    {% endif %}
+                                </span>
                             </div>
-                            <span class="text-sm text-gray-500">{{ ml_prediction.confidence|floatformat:1 }}%</span>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-600">Risk Level:</span>
+                                <span class="badge badge-lg
+                                    {% if ml_prediction.risk_level == 'Low' %}badge-success
+                                    {% elif ml_prediction.risk_level == 'Medium' %}badge-warning
+                                    {% elif ml_prediction.risk_level == 'High' %}badge-danger
+                                    {% elif ml_prediction.risk_level == 'Critical' %}badge-danger
+                                    {% endif %}">
+                                    {{ ml_prediction.risk_level }}
+                                </span>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm font-medium text-gray-600">Model Confidence:</span>
+                                    <span class="text-sm font-bold text-gray-800">{{ ml_prediction.confidence_score|floatformat:1 }}%</span>
+                                </div>
+                                <div class="w-full bg-gray-200 rounded-full h-3">
+                                    <div class="h-3 rounded-full 
+                                        {% if ml_prediction.confidence_score >= 80 %}bg-green-500
+                                        {% elif ml_prediction.confidence_score >= 60 %}bg-yellow-500
+                                        {% else %}bg-red-500
+                                        {% endif %}" 
+                                        style="width: {{ ml_prediction.confidence_score }}%"></div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     
-                    {% if ml_prediction.probabilities %}
-                    <div class="space-y-2">
-                        <span class="text-sm font-medium text-gray-600">Risk Probabilities:</span>
-                        {% for class_name, probability in ml_prediction.probabilities.items %}
-                            <div class="flex justify-between items-center">
-                                <span class="text-xs text-gray-600">{{ class_name }}:</span>
-                                <span class="text-xs font-medium">{{ probability|floatformat:1 }}%</span>
+                    <!-- Future Risk Outlook -->
+                    {% if ml_prediction.future_predictions %}
+                    <div class="bg-gradient-to-br from-purple-50 to-pink-100 p-6 rounded-lg border border-purple-200">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">🔮 Future Risk Outlook</h3>
+                        
+                        <div class="space-y-3">
+                            {% for future_pred in ml_prediction.future_predictions %}
+                            <div class="flex items-center justify-between p-3 bg-white bg-opacity-60 rounded-lg">
+                                <div>
+                                    <span class="text-sm font-medium text-gray-700">{{ future_pred.horizon_days }} day{{ future_pred.horizon_days|pluralize }}</span>
+                                    <div class="text-xs text-gray-500">{{ future_pred.confidence|floatformat:1 }}% confidence</div>
+                                </div>
+                                <span class="badge
+                                    {% if future_pred.predicted_risk_level == 'stable' %}badge-success
+                                    {% elif future_pred.predicted_risk_level == 'slight_elevated' %}badge-warning
+                                    {% elif future_pred.predicted_risk_level == 'elevated' %}badge-warning
+                                    {% elif future_pred.predicted_risk_level == 'high' %}badge-danger
+                                    {% elif future_pred.predicted_risk_level == 'critical' %}badge-danger
+                                    {% else %}badge-secondary
+                                    {% endif %}">
+                                    {{ future_pred.predicted_risk_level|title }}
+                                </span>
                             </div>
-                        {% endfor %}
+                            {% endfor %}
+                        </div>
+                        
+                        <!-- Risk Trend Indicator -->
+                        {% if ml_prediction.risk_trend %}
+                        <div class="mt-4 pt-4 border-t border-purple-200">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm font-medium text-gray-600">Risk Trend:</span>
+                                <span class="badge
+                                    {% if ml_prediction.risk_trend == 'stable' %}badge-success
+                                    {% elif ml_prediction.risk_trend == 'improving' %}badge-success
+                                    {% elif ml_prediction.risk_trend == 'rapidly_improving' %}badge-success
+                                    {% elif ml_prediction.risk_trend == 'increasing' %}badge-warning
+                                    {% elif ml_prediction.risk_trend == 'escalating' %}badge-danger
+                                    {% endif %}">
+                                    {% if ml_prediction.risk_trend == 'stable' %}📊 Stable
+                                    {% elif ml_prediction.risk_trend == 'improving' %}📈 Improving
+                                    {% elif ml_prediction.risk_trend == 'rapidly_improving' %}🚀 Rapidly Improving
+                                    {% elif ml_prediction.risk_trend == 'increasing' %}📈 Increasing
+                                    {% elif ml_prediction.risk_trend == 'escalating' %}⚠️ Escalating
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     {% endif %}
                 </div>
                 
-                <!-- Explanation -->
-                <div>
-                    <h4 class="text-sm font-medium text-gray-600 mb-2">Explanation:</h4>
-                    <div class="bg-gray-50 p-3 rounded text-sm">
-                        {{ ml_prediction.explanation|linebreaks }}
+                <!-- Detailed Analysis -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Model Explanation -->
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h4 class="text-md font-semibold text-gray-800 mb-3">🔍 Analysis Explanation</h4>
+                        <div class="prose prose-sm text-gray-700">
+                            {{ ml_prediction.explanation|linebreaks }}
+                        </div>
                     </div>
-                </div>
-            </div>
-            
-            <!-- Model Info -->
-            {% if ml_prediction.model_info %}
-            <div class="mt-4 pt-4 border-t border-gray-200">
-                <details class="text-sm text-gray-600">
-                    <summary class="cursor-pointer hover:text-gray-800">Model Information</summary>
-                    <div class="mt-2 pl-4">
-                        <p><strong>Time Series Data:</strong> 
-                            {% if ml_prediction.model_info.has_timeseries_data %}
-                                {{ ml_prediction.model_info.timeseries_points }} data points
-                            {% else %}
-                                No time series data available
-                            {% endif %}
-                        </p>
-                        <p><strong>Prediction Time:</strong> {{ ml_prediction.model_info.prediction_time }}</p>
-                    </div>
-                </details>
-            </div>
-            {% endif %}
-            
-        {% else %}
-            <div class="text-center py-8">
-                <div class="text-gray-400 mb-4">
-                    <svg class="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-                              d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                    </svg>
-                </div>
-                <p class="text-gray-600 mb-4">AI model is not available or not trained yet.</p>
-                <button onclick="generatePrediction()" 
-                        class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                    Generate Prediction
-                </button>
-            </div>
-        {% endif %}
-        
-        <!-- Recent Predictions -->
-        {% if recent_predictions %}
-        <div class="mt-6 pt-6 border-t border-gray-200">
-            <h4 class="text-sm font-medium text-gray-600 mb-3">Recent Predictions</h4>
-            <div class="space-y-2">
-                {% for prediction in recent_predictions %}
-                    <div class="flex justify-between items-center p-2 bg-gray-50 rounded text-sm">
-                        <span class="
-                            {% if prediction.risk_level == 'Stable' %}text-green-600
-                            {% elif prediction.risk_level == 'Elevated Risk' %}text-yellow-600
-                            {% elif prediction.risk_level == 'High Risk' %}text-orange-600
-                            {% elif prediction.risk_level == 'Unstable' %}text-red-600
-                            {% endif %}">
-                            {{ prediction.risk_level }}
-                        </span>
-                        <span class="text-gray-500">{{ prediction.created_at|date:"M d, Y H:i" }}</span>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-    </div>
-
-    <!-- Time Series Section -->
-    <div class="bg-white p-6 rounded-lg shadow mb-8">
-        <h2 class="text-xl font-semibold text-gray-800 mb-6">Time Series Data</h2>
-        
-        <!-- Tab Navigation -->
-        <div class="border-b border-gray-200 mb-6">
-            <nav class="-mb-px flex space-x-8">
-                <button class="tab-button active py-2 px-1 border-b-2 border-blue-500 font-medium text-sm text-blue-600" 
-                        onclick="showTab('manual-entry')">
-                    Manual Entry
-                </button>
-                <button class="tab-button py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" 
-                        onclick="showTab('file-upload')">
-                    File Upload
-                </button>
-                <button class="tab-button py-2 px-1 border-b-2 border-transparent font-medium text-sm text-gray-500 hover:text-gray-700 hover:border-gray-300" 
-                        onclick="showTab('view-data')">
-                    View Data
-                </button>
-            </nav>
-        </div>
-
-        <!-- Manual Entry Tab -->
-        <div id="manual-entry" class="tab-content">
-            <form method="post" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {% csrf_token %}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Timestamp</label>
-                    {{ timeseries_form.timestamp }}
-                    <p class="text-xs text-gray-500">{{ timeseries_form.timestamp.help_text }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Vibration Velocity</label>
-                    {{ timeseries_form.vibration_velocity }}
-                    <p class="text-xs text-gray-500">{{ timeseries_form.vibration_velocity.help_text }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Deformation Rate</label>
-                    {{ timeseries_form.deformation_rate }}
-                    <p class="text-xs text-gray-500">{{ timeseries_form.deformation_rate.help_text }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Stress</label>
-                    {{ timeseries_form.stress }}
-                    <p class="text-xs text-gray-500">{{ timeseries_form.stress.help_text }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Temperature</label>
-                    {{ timeseries_form.temperature }}
-                    <p class="text-xs text-gray-500">{{ timeseries_form.temperature.help_text }}</p>
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Humidity</label>
-                    {{ timeseries_form.humidity }}
-                    <p class="text-xs text-gray-500">{{ timeseries_form.humidity.help_text }}</p>
-                </div>
-                <div class="md:col-span-2 lg:col-span-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                    {{ timeseries_form.notes }}
-                    <p class="text-xs text-gray-500">{{ timeseries_form.notes.help_text }}</p>
-                </div>
-                <div class="md:col-span-2 lg:col-span-3">
-                    <button type="submit" name="add_timeseries" 
-                            class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">
-                        Add Time Series Data
-                    </button>
-                </div>
-            </form>
-        </div>
-
-        <!-- File Upload Tab -->
-        <div id="file-upload" class="tab-content hidden">
-            <form method="post" enctype="multipart/form-data" class="space-y-4">
-                {% csrf_token %}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Upload Excel/CSV File</label>
-                    {{ upload_form.csv_file }}
-                    <p class="text-sm text-gray-500 mt-1">{{ upload_form.csv_file.help_text }}</p>
-                </div>
-                <div>
-                    <button type="submit" name="upload_file" 
-                            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
-                        Upload File
-                    </button>
-                </div>
-                <div class="bg-blue-50 p-4 rounded">
-                    <h4 class="font-medium text-blue-800 mb-2">Expected File Format:</h4>
-                    <p class="text-sm text-blue-700">
-                        CSV/Excel file with columns: timestamp, vibration_velocity, deformation_rate, stress, temperature, humidity, notes
-                    </p>
-                </div>
-            </form>
-        </div>
-
-        <!-- View Data Tab -->
-        <div id="view-data" class="tab-content hidden">
-            {% if timeseries_data %}
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Timestamp</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vibration (mm/s)</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deformation Rate (mm/day)</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stress (MPa)</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Temp (°C)</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Humidity (%)</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for data in timeseries_data %}
-                            <tr>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.timestamp|date:"M d, Y H:i" }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.vibration_velocity|default:"-" }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.deformation_rate|default:"-" }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.stress|default:"-" }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.temperature|default:"-" }}</td>
-                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ data.humidity|default:"-" }}</td>
-                            </tr>
+                    
+                    <!-- Recommended Actions -->
+                    {% if ml_prediction.recommendations %}
+                    <div class="bg-yellow-50 p-6 rounded-lg border border-yellow-200">
+                        <h4 class="text-md font-semibold text-gray-800 mb-3">📋 Recommended Actions</h4>
+                        <ul class="space-y-2">
+                            {% for recommendation in ml_prediction.recommendations %}
+                            <li class="flex items-start space-x-2">
+                                <span class="inline-block w-2 h-2 bg-yellow-500 rounded-full mt-2 flex-shrink-0"></span>
+                                <span class="text-sm text-gray-700">{{ recommendation }}</span>
+                            </li>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                        </ul>
+                    </div>
+                    {% endif %}
                 </div>
-                <div class="mt-4">
-                    <p class="text-sm text-gray-600">Showing latest {{ timeseries_data|length }} records.</p>
-                </div>
-            {% else %}
-                <div class="text-center py-8">
-                    <p class="text-gray-500">No time series data available for this stope.</p>
-                    <p class="text-sm text-gray-400 mt-2">Add data using the Manual Entry or File Upload tabs.</p>
-                </div>
-            {% endif %}
-
-            {% if timeseries_uploads %}
-                <div class="mt-8">
-                    <h4 class="font-medium text-gray-800 mb-4">Recent File Uploads</h4>
-                    <div class="space-y-2">
-                        {% for upload in timeseries_uploads %}
-                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded">
-                            <span class="text-sm">{{ upload.csv_file.name }}</span>
-                            <span class="text-xs text-gray-500">{{ upload.uploaded_at|date:"M d, Y H:i" }}</span>
+                
+                <!-- Enhanced Risk Probability Distribution -->
+                {% if ml_prediction.probabilities %}
+                <div class="bg-white p-6 rounded-lg border border-gray-200 mb-6">
+                    <h4 class="text-md font-semibold text-gray-800 mb-4">📊 Risk Probability Distribution</h4>
+                    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {% for class_name, probability in ml_prediction.probabilities.items %}
+                        <div class="text-center p-3 bg-gray-50 rounded-lg">
+                            <div class="text-lg font-bold text-gray-800">{{ probability|floatformat:1 }}%</div>
+                            <div class="text-xs text-gray-600 capitalize">{{ class_name|title }}</div>
+                            <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                                <div class="h-2 rounded-full
+                                    {% if probability > 50 %}bg-red-500
+                                    {% elif probability > 25 %}bg-yellow-500
+                                    {% else %}bg-green-500
+                                    {% endif %}" 
+                                    style="width: {{ probability }}%"></div>
+                            </div>
                         </div>
                         {% endfor %}
                     </div>
                 </div>
+                {% endif %}
+                
+                <!-- Model Information -->
+                {% if ml_prediction.model_info %}
+                <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <details class="text-sm text-gray-700">
+                        <summary class="cursor-pointer hover:text-gray-800 font-medium flex items-center space-x-2">
+                            <span class="material-icons text-sm">info</span>
+                            <span>Enhanced Model Information</span>
+                        </summary>
+                        <div class="mt-3 pl-6 space-y-2">
+                            <p><strong>Model Type:</strong> {{ ml_prediction.model_type }}</p>
+                            {% if ml_prediction.enhanced_mode %}
+                            <p><strong>Enhanced Mode:</strong> ✅ Active</p>
+                            {% endif %}
+                            {% if ml_prediction.model_info.has_timeseries_data %}
+                            <p><strong>Time Series Data:</strong> {{ ml_prediction.model_info.timeseries_points }} data points</p>
+                            {% endif %}
+                            <p><strong>Prediction Time:</strong> {{ ml_prediction.model_info.prediction_time }}</p>
+                        </div>
+                    </details>
+                </div>
+                {% endif %}
+                
+            {% else %}
+                <div class="text-center py-8">
+                    <div class="empty-state">
+                        <span class="material-icons text-6xl text-gray-300">psychology</span>
+                        <h3 class="text-lg font-medium text-gray-900 mt-4">No AI Prediction Available</h3>
+                        <p class="text-gray-600 mt-2">Generate a comprehensive stability prediction using our enhanced machine learning analysis.</p>
+                        <button onclick="generatePrediction()" class="btn btn-primary mt-4">
+                            <span class="material-icons">play_arrow</span>
+                            Generate Enhanced Prediction
+                        </button>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Future Predictions Timeline -->
+            {% if future_predictions %}
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">🔮 Future Risk Timeline</h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                    {% for future_pred in future_predictions %}
+                    <div class="bg-gradient-to-br from-gray-50 to-gray-100 p-4 rounded-lg border text-center">
+                        <div class="text-sm font-medium text-gray-700 mb-2">Day {{ future_pred.days_ahead }}</div>
+                        <div class="space-y-2">
+                            <span class="inline-block px-2 py-1 text-xs font-medium rounded-full
+                                {% if future_pred.risk_level == 'stable' %}bg-green-100 text-green-800
+                                {% elif future_pred.risk_level == 'slight_elevated' %}bg-yellow-100 text-yellow-800
+                                {% elif future_pred.risk_level == 'elevated' %}bg-orange-100 text-orange-800
+                                {% elif future_pred.risk_level == 'high' %}bg-red-100 text-red-800
+                                {% elif future_pred.risk_level == 'critical' %}bg-red-200 text-red-900
+                                {% else %}bg-gray-100 text-gray-800
+                                {% endif %}">
+                                {{ future_pred.risk_level|title }}
+                            </span>
+                            <div class="text-xs text-gray-600">
+                                {{ future_pred.confidence_score|floatformat:1 }}% confidence
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Active Alerts -->
+            {% if active_alerts %}
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">🚨 Active Alerts</h4>
+                <div class="space-y-3">
+                    {% for alert in active_alerts %}
+                    <div class="bg-red-50 border border-red-200 p-4 rounded-lg">
+                        <div class="flex items-start space-x-3">
+                            <span class="material-icons text-red-600 mt-0.5">warning</span>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <h5 class="font-medium text-red-800">{{ alert.alert_type|title }} Alert</h5>
+                                    <span class="text-xs text-red-600">{{ alert.created_at|date:"M d, Y H:i" }}</span>
+                                </div>
+                                <p class="text-sm text-red-700 mt-1">{{ alert.message }}</p>
+                                {% if alert.recommended_action %}
+                                <p class="text-xs text-red-600 mt-2">
+                                    <strong>Recommended Action:</strong> {{ alert.recommended_action }}
+                                </p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Recent Predictions History -->
+            {% if recent_predictions %}
+            <div class="mt-8 pt-6 border-t border-gray-200">
+                <h4 class="text-lg font-semibold text-gray-800 mb-4">📈 Recent Prediction History</h4>
+                <div class="space-y-3">
+                    {% for prediction in recent_predictions %}
+                        <div class="flex justify-between items-center p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <span class="badge
+                                    {% if prediction.risk_level == 'Stable' %}badge-success
+                                    {% elif prediction.risk_level == 'Elevated Risk' %}badge-warning
+                                    {% elif prediction.risk_level == 'High Risk' %}badge-danger
+                                    {% elif prediction.risk_level == 'Unstable' %}badge-danger
+                                    {% endif %}">
+                                    {{ prediction.risk_level }}
+                                </span>
+                                <div class="text-sm text-gray-600">
+                                    Confidence: {{ prediction.impact_score|floatformat:1 }}%
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <div class="text-sm text-gray-500">{{ prediction.created_at|date:"M d, Y" }}</div>
+                                <div class="text-xs text-gray-400">{{ prediction.created_at|date:"H:i" }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
             {% endif %}
         </div>
     </div>
 
-    <!-- Actions -->
-    <div class="flex space-x-4">
-        <a href="{% url 'stope_list' %}" 
-           class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2">
-            Back to Stope List
-        </a>
+    <!-- Time Series Section -->
+    <div class="card mb-8">
+        <div class="card-header">
+            <h2 class="card-title">
+                <span class="material-icons">timeline</span>
+                Time Series Data
+            </h2>
+        </div>
+        <div class="card-body">
+            <!-- Tab Navigation -->
+            <div class="tabs">
+                <div class="tab-list">
+                    <button class="tab-button active" onclick="showTab('manual-entry')">
+                        <span class="material-icons">edit</span>
+                        Manual Entry
+                    </button>
+                    <button class="tab-button" onclick="showTab('file-upload')">
+                        <span class="material-icons">upload_file</span>
+                        File Upload
+                    </button>
+                    <button class="tab-button" onclick="showTab('view-data')">
+                        <span class="material-icons">table_view</span>
+                        View Data
+                    </button>
+                </div>
+            </div>
+
+            <!-- Manual Entry Tab -->
+            <div id="manual-entry" class="tab-content">
+                <form method="post" class="form-grid">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Timestamp</label>
+                        {{ timeseries_form.timestamp }}
+                        <p class="form-help">{{ timeseries_form.timestamp.help_text }}</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Vibration Velocity</label>
+                        {{ timeseries_form.vibration_velocity }}
+                        <p class="form-help">{{ timeseries_form.vibration_velocity.help_text }}</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Deformation Rate</label>
+                        {{ timeseries_form.deformation_rate }}
+                        <p class="form-help">{{ timeseries_form.deformation_rate.help_text }}</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Stress</label>
+                        {{ timeseries_form.stress }}
+                        <p class="form-help">{{ timeseries_form.stress.help_text }}</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Temperature</label>
+                        {{ timeseries_form.temperature }}
+                        <p class="form-help">{{ timeseries_form.temperature.help_text }}</p>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Humidity</label>
+                        {{ timeseries_form.humidity }}
+                        <p class="form-help">{{ timeseries_form.humidity.help_text }}</p>
+                    </div>
+                    <div class="form-group form-group-full">
+                        <label class="form-label">Notes</label>
+                        {{ timeseries_form.notes }}
+                        <p class="form-help">{{ timeseries_form.notes.help_text }}</p>
+                    </div>
+                    <div class="form-group form-group-full">
+                        <button type="submit" name="add_timeseries" class="btn btn-primary">
+                            <span class="material-icons">add</span>
+                            Add Time Series Data
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- File Upload Tab -->
+            <div id="file-upload" class="tab-content hidden">
+                <form method="post" enctype="multipart/form-data" class="space-y-6">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label class="form-label">Upload Excel/CSV File</label>
+                        {{ upload_form.csv_file }}
+                        <p class="form-help">{{ upload_form.csv_file.help_text }}</p>
+                    </div>
+                    <div>
+                        <button type="submit" name="upload_file" class="btn btn-success">
+                            <span class="material-icons">upload</span>
+                            Upload File
+                        </button>
+                    </div>
+                    <div class="alert alert-info">
+                        <h4 class="font-medium mb-2">Expected File Format:</h4>
+                        <p class="text-sm">
+                            CSV/Excel file with columns: timestamp, vibration_velocity, deformation_rate, stress, temperature, humidity, notes
+                        </p>
+                    </div>
+                </form>
+            </div>
+
+            <!-- View Data Tab -->
+            <div id="view-data" class="tab-content hidden">
+                {% if timeseries_data %}
+                    <div class="table-responsive">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Vibration (mm/s)</th>
+                                    <th>Deformation Rate (mm/day)</th>
+                                    <th>Stress (MPa)</th>
+                                    <th>Temp (°C)</th>
+                                    <th>Humidity (%)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for data in timeseries_data %}
+                                <tr>
+                                    <td>{{ data.timestamp|date:"M d, Y H:i" }}</td>
+                                    <td>{{ data.vibration_velocity|default:"-" }}</td>
+                                    <td>{{ data.deformation_rate|default:"-" }}</td>
+                                    <td>{{ data.stress|default:"-" }}</td>
+                                    <td>{{ data.temperature|default:"-" }}</td>
+                                    <td>{{ data.humidity|default:"-" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="mt-4">
+                        <p class="text-sm text-gray-600">Showing latest {{ timeseries_data|length }} records.</p>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <span class="material-icons text-6xl text-gray-300">timeline</span>
+                        <h3 class="text-lg font-medium text-gray-900 mt-4">No Time Series Data</h3>
+                        <p class="text-gray-600 mt-2">Add data using the Manual Entry or File Upload tabs.</p>
+                    </div>
+                {% endif %}
+
+                {% if timeseries_uploads %}
+                    <div class="mt-8">
+                        <h4 class="font-medium text-gray-800 mb-4">Recent File Uploads</h4>
+                        <div class="space-y-2">
+                            {% for upload in timeseries_uploads %}
+                            <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
+                                <span class="text-sm">{{ upload.csv_file.name }}</span>
+                                <span class="text-xs text-gray-500">{{ upload.uploaded_at|date:"M d, Y H:i" }}</span>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
     </div>
 </div>
 
@@ -315,24 +554,22 @@ function showTab(tabName) {
     
     // Remove active class from all buttons
     document.querySelectorAll('.tab-button').forEach(button => {
-        button.classList.remove('active', 'text-blue-600', 'border-blue-500');
-        button.classList.add('text-gray-500', 'border-transparent');
+        button.classList.remove('active');
     });
     
     // Show selected tab content
     document.getElementById(tabName).classList.remove('hidden');
     
     // Add active class to clicked button
-    event.target.classList.add('active', 'text-blue-600', 'border-blue-500');
-    event.target.classList.remove('text-gray-500', 'border-transparent');
+    event.target.closest('.tab-button').classList.add('active');
 }
 
 function generatePrediction() {
-    const button = event.target;
-    const originalText = button.textContent;
+    const button = event.target.closest('button');
+    const originalContent = button.innerHTML;
     
     // Show loading state
-    button.textContent = 'Generating...';
+    button.innerHTML = '<span class="material-icons animate-spin">refresh</span> Generating...';
     button.disabled = true;
     
     // Make AJAX request to generate prediction
@@ -349,15 +586,16 @@ function generatePrediction() {
             // Reload the page to show the new prediction
             window.location.reload();
         } else {
-            alert('Error generating prediction: ' + data.error);
-            button.textContent = originalText;
+            // Show error notification
+            showNotification('Error generating prediction: ' + data.error, 'error');
+            button.innerHTML = originalContent;
             button.disabled = false;
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while generating the prediction.');
-        button.textContent = originalText;
+        showNotification('An error occurred while generating the prediction.', 'error');
+        button.innerHTML = originalContent;
         button.disabled = false;
     });
 }
@@ -389,15 +627,36 @@ function submitFeedback(predictionId, isHelpful) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert(data.message);
+            showNotification(data.message, 'success');
         } else {
-            alert('Error submitting feedback: ' + data.error);
+            showNotification('Error submitting feedback: ' + data.error, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        alert('An error occurred while submitting feedback.');
+        showNotification('An error occurred while submitting feedback.', 'error');
     });
+}
+
+function showNotification(message, type) {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification notification-${type}`;
+    notification.innerHTML = `
+        <span class="material-icons">${type === 'success' ? 'check_circle' : 'error'}</span>
+        <span>${message}</span>
+        <button onclick="this.parentElement.remove()" class="material-icons">close</button>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Auto remove after 5 seconds
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
 }
 
 // Set progress bar widths dynamically
