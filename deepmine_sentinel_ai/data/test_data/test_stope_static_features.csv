@@ -1,19 +1,16 @@
 stope_name,rqd,hr,depth,dip,direction,undercut_wdt,rock_type,support_type,support_density,support_installed,stability
-Test_Stope_001,44.96,19.11,625.8,62.93,South,2.94,Basalt,Mesh,0.32,0,0
-Test_Stope_002,16.65,19.46,691.09,41.68,West,3.09,Granite,Rock Bolts,0.35,0,0
-Test_Stope_003,39.34,11.45,430.76,46.02,Southeast,5.67,Basalt,Rock Bolts,0.31,0,0
-Test_Stope_004,51.49,16.13,279.79,58.28,West,5.55,Granite,Steel Sets,0.24,0,0
-Test_Stope_005,63.6,5.07,192.28,82.19,West,7.79,Quartzite,Shotcrete,0.85,0,0
-Test_Stope_006,69.74,9.92,229.32,57.23,Southwest,2.21,Quartzite,Mesh,0.93,0,0
-Test_Stope_007,35.7,13.93,352.61,58.6,East,5.28,Limestone,Mesh,0.35,1,1
-Test_Stope_008,22.08,5.53,179.4,47.89,East,4.33,Granite,Mesh,0.42,0,0
-Test_Stope_009,81.3,8.42,332.61,59.85,South,2.85,Limestone,Rock Bolts,0.84,1,1
-Test_Stope_010,15.44,16.68,609.46,70.1,Northwest,6.63,Quartzite,Mesh,0.26,0,0
-Test_Stope_011,43.68,4.09,711.02,64.28,Southwest,3.99,Quartzite,Rock Bolts,0.25,1,0
-Test_Stope_012,73.37,13.48,726.69,55.97,South,2.72,Quartzite,Mesh,0.77,1,1
-Test_Stope_013,75.86,12.1,651.13,57.16,West,5.14,Basalt,Rock Bolts,0.54,0,0
-Test_Stope_014,40.15,11.15,739.92,43.71,Northeast,4.46,Basalt,Cable Bolts,0.8,0,0
-Test_Stope_015,33.3,3.39,338.34,38.87,Southeast,7.58,Schist,Shotcrete,0.85,1,1
-Edge_Stable_001,95.0,2.5,150.0,45.0,North,3.0,Granite,Cable Bolts,0.95,1,1
-Edge_Unstable_001,15.0,18.0,750.0,80.0,Southwest,7.5,Schist,Mesh,0.25,0,0
-Edge_Borderline_001,50.0,10.0,400.0,60.0,East,5.0,Basalt,Rock Bolts,0.5,1,1
+Test_Stope_001,71.62,6.68,245.09,38.91,South,3.38,Granite,Rock Bolts,0.68,1,1
+Test_Stope_002,62.35,4.33,734.29,84.54,Southwest,5.57,Schist,Rock Bolts,0.56,1,1
+Test_Stope_003,74.95,7.21,181.41,76.54,Southeast,3.12,Limestone,Rock Bolts,0.78,1,1
+Test_Stope_004,68.84,4.08,789.26,53.81,Southeast,7.93,Sandstone,Steel Sets,0.62,1,1
+Test_Stope_005,51.37,15.0,326.32,51.98,Southwest,3.44,Basalt,Cable Bolts,0.64,0,0
+Test_Stope_006,73.68,2.66,238.98,68.81,Northwest,5.22,Granite,Rock Bolts,0.72,0,1
+Test_Stope_007,25.0,9.34,1000.0,49.65,West,7.22,Gneiss,Mesh,0.43,1,0
+Test_Stope_008,77.71,7.46,344.28,39.33,South,6.01,Basalt,Rock Bolts,0.65,1,1
+Test_Stope_009,71.0,3.24,288.49,49.45,South,4.24,Granite,Mesh,0.84,1,1
+Test_Stope_010,84.55,4.5,165.1,59.56,South,6.92,Granite,Shotcrete,0.9,1,1
+Test_Stope_011,88.72,2.98,162.0,50.51,South,7.93,Quartzite,Rock Bolts,0.5,1,1
+Test_Stope_012,65.22,8.41,273.07,68.5,East,5.66,Sandstone,Rock Bolts,0.88,1,1
+Test_Stope_013,35.19,10.85,277.2,58.88,Northwest,7.63,Basalt,Steel Sets,0.43,1,0
+Test_Stope_014,53.29,9.03,653.81,49.02,North,4.44,Quartzite,Shotcrete,0.66,1,1
+Test_Stope_015,60.63,7.61,716.86,64.83,Southeast,4.28,Limestone,Steel Sets,0.23,0,0

@@ -900,14 +900,22 @@ class EnhancedDualBranchStabilityPredictor:
         class_distribution = np.bincount(y_current) / len(y_current)
         logger.info(f"   Class balance: Stable={class_distribution[0]:.3f}, Unstable={class_distribution[1]:.3f}")
         
-        # Calculate class weights if not provided
+        # Calculate class weights for information only (not used in training due to multi-output limitation)
         if class_weights is None:
             n_classes = len(np.unique(y_current))
             class_weights = {
                 0: len(y_current) / (n_classes * np.sum(y_current == 0)),
                 1: len(y_current) / (n_classes * np.sum(y_current == 1))
             }
-            logger.info(f"   Calculated class weights: {class_weights}")
+            logger.info(f"   Calculated class weights (informational): {class_weights}")
+            logger.info(f"   ⚠️  Note: Class weights not applied - Keras doesn't support class_weight for multi-output models")
+        
+        # Alternative approaches for handling class imbalance in multi-output models:
+        # 1. Use stratified sampling (implemented below)
+        # 2. Apply balanced class weights in loss function compilation
+        # 3. Use sample_weight parameter (can be implemented later)
+        # 4. Data augmentation for minority classes
+        # 5. Ensemble methods or cost-sensitive learning approaches
         
         # Stratified split to maintain class distribution
         try:
@@ -1002,6 +1010,13 @@ class EnhancedDualBranchStabilityPredictor:
         logger.info(f"   Early stopping patience: {early_stopping_patience}")
         
         try:
+            # Note: class_weight is not supported for multi-output models in Keras
+            # Alternative approaches for class imbalance:
+            # 1. Use sample_weight parameter (can be implemented later)
+            # 2. Use custom loss functions with class weighting
+            # 3. Use data augmentation techniques
+            # 4. Use ensemble methods or cost-sensitive learning
+            
             history = self.combined_model.fit(
                 [X_static_train, X_ts_train], 
                 y_train_dict,
@@ -1009,7 +1024,6 @@ class EnhancedDualBranchStabilityPredictor:
                 epochs=epochs,
                 batch_size=batch_size,
                 callbacks=callbacks,
-                class_weight={'current_stability': class_weights},  # Apply class weights
                 verbose=1,
                 shuffle=True
             )

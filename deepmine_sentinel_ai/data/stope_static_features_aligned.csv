@@ -1,21 +1,51 @@
 stope_name,rqd,hr,depth,dip,direction,undercut_wdt,rock_type,support_type,support_density,support_installed,stability
-Stope_001,25.96,4.84,292.66,64.95,South,4.27,Basalt,Mesh,0.32,1,1
-Stope_002,34.26,13.97,289.42,46.13,Southwest,4.09,Basalt,Shotcrete,0.62,0,1
-Stope_003,78.17,9.04,285.9,66.63,Northwest,7.18,Basalt,Rock Bolts,0.48,0,1
-Stope_004,62.92,9.22,479.57,54.51,North,6.63,Schist,Rock Bolts,0.53,0,1
-Stope_005,74.51,14.26,725.8,50.15,North,3.7,Granite,Shotcrete,0.66,1,1
-Stope_006,80.16,7.47,378.15,76.2,Southwest,4.64,Schist,Mesh,0.85,1,0
-Stope_007,88.51,14.56,447.4,70.3,Northeast,5.6,Granite,Cable Bolts,0.42,1,0
-Stope_008,60.26,4.13,722.84,71.33,South,5.77,Schist,Steel Sets,0.8,0,1
-Stope_009,80.71,10.96,397.36,46.03,West,5.2,Schist,Rock Bolts,0.8,0,1
-Stope_010,32.57,8.21,460.73,56.16,Southeast,7.04,Gneiss,Rock Bolts,0.34,0,1
-Stope_011,71.61,11.99,435.76,65.3,East,3.34,Quartzite,Steel Sets,0.44,1,0
-Stope_012,61.91,10.72,328.11,70.62,Northwest,3.99,Basalt,Shotcrete,0.84,1,0
-Stope_013,64.91,6.49,462.98,84.01,Northwest,5.56,Granite,Steel Sets,0.44,0,1
-Stope_014,66.86,9.83,467.86,70.45,Southeast,6.23,Granite,Rock Bolts,0.96,0,1
-Stope_015,37.62,10.71,218.95,66.04,Southwest,7.75,Basalt,Steel Sets,0.99,1,0
-Stope_016,85.97,5.76,626.03,73.12,East,7.59,Quartzite,Mesh,0.4,1,0
-Stope_017,49.53,7.8,669.37,49.5,South,3.17,Quartzite,Rock Bolts,0.81,0,1
-Stope_018,45.02,10.42,540.77,71.74,Southwest,6.95,Granite,Cable Bolts,0.91,1,0
-Stope_019,52.64,11.55,549.61,66.44,Southeast,5.5,Quartzite,Cable Bolts,0.64,1,0
-Stope_020,51.35,7.6,636.6,51.24,East,5.11,Schist,Steel Sets,0.73,1,0
+Stope_001,88.69,4.01,238.01,48.62,Northeast,4.45,Granite,Mesh,0.18,1,1
+Stope_002,83.46,5.38,476.59,63.41,Northwest,6.39,Granite,Rock Bolts,0.48,0,1
+Stope_003,68.62,6.7,420.12,78.39,Southeast,5.26,Basalt,Shotcrete,0.64,0,1
+Stope_004,25.41,7.81,461.68,69.68,Southwest,8.82,Schist,Cable Bolts,0.93,1,0
+Stope_005,59.7,3.98,332.67,53.15,Southwest,4.92,Quartzite,Rock Bolts,0.54,0,1
+Stope_006,61.74,5.52,495.89,76.18,North,5.51,Granite,Mesh,0.8,0,1
+Stope_007,46.83,8.76,435.32,47.86,North,9.31,Basalt,Cable Bolts,0.78,1,1
+Stope_008,72.55,5.83,433.59,61.36,Northwest,5.49,Sandstone,Shotcrete,0.4,0,1
+Stope_009,72.59,5.3,501.94,62.59,South,4.13,Gneiss,Rock Bolts,0.64,0,1
+Stope_010,36.81,6.53,1000.0,50.36,East,6.01,Schist,Steel Sets,1.0,0,1
+Stope_011,85.44,7.89,681.31,37.33,North,9.47,Quartzite,Rock Bolts,0.63,1,1
+Stope_012,55.52,5.39,439.15,33.74,West,6.24,Basalt,Rock Bolts,0.63,1,1
+Stope_013,90.5,6.72,265.98,80.25,South,8.28,Granite,Shotcrete,0.26,1,1
+Stope_014,69.9,10.11,946.69,29.94,West,10.0,Granite,Shotcrete,0.61,0,0
+Stope_015,74.07,4.73,281.21,74.53,South,3.75,Gneiss,Rock Bolts,0.34,0,1
+Stope_016,76.53,5.08,275.72,80.24,Southeast,3.62,Gneiss,Mesh,0.4,0,1
+Stope_017,70.82,6.83,183.8,55.19,Southeast,5.84,Sandstone,Rock Bolts,0.47,1,1
+Stope_018,50.95,9.05,846.19,59.38,North,7.67,Sandstone,Rock Bolts,0.97,1,1
+Stope_019,53.42,6.48,363.58,20.81,North,7.64,Gneiss,Shotcrete,0.47,1,1
+Stope_020,83.41,6.59,843.68,67.22,North,6.53,Gneiss,Shotcrete,0.73,0,1
+Stope_021,54.29,4.24,489.69,38.22,South,3.83,Gneiss,Cable Bolts,0.85,1,1
+Stope_022,60.45,6.59,342.13,75.51,Northwest,7.93,Limestone,Rock Bolts,0.49,0,1
+Stope_023,62.56,6.86,301.62,58.07,Southwest,7.95,Basalt,Rock Bolts,0.41,0,1
+Stope_024,36.92,4.24,344.85,65.42,Southwest,4.94,Sandstone,Steel Sets,0.94,1,1
+Stope_025,74.93,5.44,160.86,86.82,Northwest,6.54,Granite,Rock Bolts,0.28,1,1
+Stope_026,74.73,6.27,400.82,73.24,Southeast,7.93,Basalt,Rock Bolts,0.46,1,1
+Stope_027,54.96,5.2,491.81,62.47,South,5.88,Schist,Rock Bolts,0.57,0,0
+Stope_028,75.94,10.77,1000.0,62.79,South,10.0,Quartzite,Shotcrete,0.84,1,1
+Stope_029,43.89,8.54,541.95,41.03,Southwest,9.87,Limestone,Shotcrete,1.0,1,0
+Stope_030,47.35,6.34,565.96,50.48,South,6.96,Sandstone,Shotcrete,0.87,1,0
+Stope_031,30.78,7.88,157.75,67.29,Southwest,7.18,Limestone,Steel Sets,0.74,1,0
+Stope_032,62.56,8.85,879.62,46.4,Northeast,9.83,Quartzite,Shotcrete,0.87,1,1
+Stope_033,27.61,7.13,839.54,65.04,East,6.22,Schist,Steel Sets,1.0,1,0
+Stope_034,45.4,7.14,323.35,74.13,Northwest,7.71,Schist,Shotcrete,0.84,0,1
+Stope_035,49.83,7.67,277.24,62.5,South,5.42,Limestone,Rock Bolts,0.69,0,0
+Stope_036,85.31,6.78,757.0,89.06,West,8.38,Granite,Rock Bolts,0.55,0,1
+Stope_037,92.54,9.39,1000.0,33.33,Northeast,7.87,Granite,Mesh,0.48,0,1
+Stope_038,58.39,9.57,162.81,42.74,East,9.54,Limestone,Cable Bolts,0.51,0,1
+Stope_039,64.43,6.64,686.06,19.68,West,6.35,Schist,Mesh,0.57,1,0
+Stope_040,34.7,5.71,391.27,54.31,Northeast,4.68,Limestone,Cable Bolts,0.85,1,0
+Stope_041,41.9,9.01,1000.0,46.65,Northwest,7.16,Limestone,Rock Bolts,0.84,1,1
+Stope_042,63.57,6.1,404.43,57.03,North,5.68,Granite,Rock Bolts,0.46,1,0
+Stope_043,82.56,5.39,166.25,45.29,West,4.62,Granite,Shotcrete,0.24,1,1
+Stope_044,37.52,6.27,181.68,77.56,Northeast,7.21,Schist,Steel Sets,0.52,1,0
+Stope_045,65.64,4.57,206.17,75.21,North,4.04,Gneiss,Rock Bolts,0.5,1,1
+Stope_046,61.15,4.45,181.27,47.77,Southwest,4.05,Gneiss,Rock Bolts,0.43,0,1
+Stope_047,62.3,4.89,193.3,19.18,Northeast,4.74,Gneiss,Rock Bolts,0.43,1,1
+Stope_048,79.63,10.71,747.39,48.31,Southwest,10.0,Quartzite,Mesh,0.63,0,1
+Stope_049,42.99,7.67,208.93,34.49,North,7.7,Schist,Shotcrete,0.68,1,0
+Stope_050,66.33,8.55,1000.0,41.1,Northwest,10.0,Limestone,Mesh,0.89,0,1
