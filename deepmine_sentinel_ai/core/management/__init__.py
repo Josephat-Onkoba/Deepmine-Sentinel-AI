@@ -1,1 +1,1 @@
-# Django management commands
+# Empty file to make this a Python package

@@ -80,6 +80,15 @@ DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
+        'OPTIONS': {
+            'timeout': 20,  # 20 second timeout for database locks
+            'init_command': 
+                "PRAGMA foreign_keys=ON;"
+                "PRAGMA journal_mode=WAL;"  # Write-Ahead Logging for better concurrency
+                "PRAGMA synchronous=NORMAL;"  # Balance between safety and performance
+                "PRAGMA cache_size=1000;"  # Increase cache size
+                "PRAGMA temp_store=MEMORY;"  # Store temp tables in memory
+        },
     }
 }
 

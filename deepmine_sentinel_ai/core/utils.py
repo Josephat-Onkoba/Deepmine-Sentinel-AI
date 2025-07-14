@@ -1,9 +1,5 @@
 import numpy as np
 import pandas as pd
-import tensorflow as tf
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.model_selection import train_test_split
-import joblib
 import os
 from datetime import datetime, timedelta
 from typing import Dict, List, Tuple, Optional
@@ -259,190 +255,46 @@ def get_stope_profile_summary(stope_name):
         # Return default profile summary if there's an error
         return [0.5, 0.3, 0.6, 0.7, 0.4, 0.5, 0.3, 0.6, 0.5, 0.4]
 
-
-def get_stope_features_for_ml(stope_name, static_df):
+def send_notification(message: str, severity: str = 'info', recipients: List[str] = None) -> bool:
     """
-    Extract and preprocess stope features for machine learning model input.
+    Send notification about system events.
     
-    :param stope_name: string, name of the stope
-    :param static_df: pandas DataFrame with static stope features
-    :return: dict with processed features
+    Args:
+        message: Notification message
+        severity: Severity level ('info', 'warning', 'error', 'critical')
+        recipients: List of recipient emails/identifiers
+    
+    Returns:
+        bool: True if notification sent successfully
     """
-    try:
-        row = static_df[static_df['stope_name'] == stope_name].iloc[0]
-        
-        # Map categorical features to numerical
-        direction_map = {
-            'North': 0, 'Northeast': 1, 'East': 2, 'Southeast': 3,
-            'South': 4, 'Southwest': 5, 'West': 6, 'Northwest': 7
-        }
-        
-        rock_type_map = {
-            'Granite': 0, 'Basalt': 1, 'Quartzite': 2, 'Schist': 3,
-            'Gneiss': 4, 'Marble': 5, 'Slate': 6, 'Shale': 7,
-            'Limestone': 8, 'Sandstone': 9, 'Obsidian': 10
-        }
-        
-        support_type_map = {
-            'None': 0, 'Rock Bolts': 1, 'Mesh': 2, 'Steel Sets': 3,
-            'Shotcrete': 4, 'Timber': 5, 'Cable Bolts': 6
-        }
-        
-        features = {
-            'rqd': float(row['rqd']),
-            'hr': float(row['hr']),
-            'depth': float(row['depth']),
-            'dip': float(row['dip']),
-            'direction': direction_map.get(row['direction'], 0),
-            'Undercut_wdt': float(row['undercut_wdt']),  # Note: key matches utils function
-            'rock_type': rock_type_map.get(row['rock_type'], 0),
-            'support_type': support_type_map.get(row['support_type'], 0),
-            'support_density': float(row['support_density']),
-            'support_installed': int(row['support_installed'])
-        }
-        
-        return features
-        
-    except Exception as e:
-        print(f"Error extracting features for stope {stope_name}: {e}")
-        return None
+    logger.info(f"NOTIFICATION [{severity.upper()}]: {message}")
+    
+    # In a real implementation, this would send emails, SMS, or other notifications
+    # For now, we just log the notification
+    if recipients:
+        logger.info(f"Recipients: {', '.join(recipients)}")
+    
+    return True
 
-# Backward compatibility function
-def predict_stability_with_neural_network(stope_data: Dict, timeseries_data: pd.DataFrame = None) -> Dict:
+def log_system_event(event_type: str, details: str, severity: str = 'info') -> None:
     """
-    Enhanced stability prediction using the trained dual-branch neural network
+    Log system events for auditing and monitoring.
+    
+    Args:
+        event_type: Type of system event
+        details: Detailed description
+        severity: Event severity level
     """
-    try:
-        # Import the enhanced model
-        from core.ml.models.dual_branch_stability_predictor import EnhancedDualBranchStabilityPredictor
-        
-        # Initialize model with default paths
-        project_root = os.path.dirname(os.path.dirname(__file__))  # Go up to deepmine_sentinel_ai directory
-        static_features_path = os.path.join(project_root, 'data', 'stope_static_features_aligned.csv')
-        timeseries_path = os.path.join(project_root, 'data', 'stope_timeseries_data_aligned.csv')
-        
-        if not os.path.exists(static_features_path) or not os.path.exists(timeseries_path):
-            # Return error if data files are missing
-            return {
-                'current': {
-                    'error': 'Training data files not found. Neural network model requires aligned CSV data files.',
-                    'model_type': 'Neural Network (Data Missing)'
-                },
-                'future': {
-                    'error': 'Training data files not found. Neural network model requires aligned CSV data files.'
-                },
-                'model_type': 'Neural Network (Data Missing)',
-                'prediction_timestamp': datetime.now().isoformat()
-            }
-        
-        # Try to load trained enhanced model
-        model = EnhancedDualBranchStabilityPredictor(static_features_path, timeseries_path)
-        
-        # Load the trained model if available
-        enhanced_model_path = 'models/enhanced_dual_branch_model.h5'
-        if os.path.exists(enhanced_model_path):
-            model.load_enhanced_model(enhanced_model_path)
-            
-            # Get stope name from data (assuming it's provided)
-            stope_name = stope_data.get('stope_name', 'Unknown')
-            
-            # Make comprehensive prediction
-            prediction_result = model.predict_comprehensive_stability(stope_name)
-            
-            if prediction_result:
-                return {
-                    'current': prediction_result['current_stability'],
-                    'future': prediction_result['future_predictions'],
-                    'risk_trend': prediction_result['risk_trend'],
-                    'explanations': prediction_result['explanations'],
-                    'recommendations': prediction_result['recommendations'],
-                    'model_type': 'Dual-Branch Neural Network',
-                    'model_version': 'Enhanced v2.0',
-                    'prediction_timestamp': prediction_result['timestamp']
-                }
-        
-        # If no trained model available, return error
-        return {
-            'current': {
-                'error': 'Neural network model not available. Please ensure the dual-branch stability model is trained.',
-                'model_type': 'Neural Network (Not Available)'
-            },
-            'future': {
-                'error': 'Neural network model not available. Please ensure the dual-branch stability model is trained.'
-            },
-            'model_type': 'Neural Network (Model not trained)',
-            'prediction_timestamp': datetime.now().isoformat()
-        }
-        
-    except Exception as e:
-        logger.error(f"Error in enhanced neural network prediction: {e}")
-        
-        # Return error for neural network failures
-        return {
-            'current': {
-                'error': f'Neural network prediction failed: {str(e)}',
-                'model_type': 'Neural Network (Error)'
-            },
-            'future': {
-                'error': f'Neural network prediction failed: {str(e)}'
-            },
-            'model_type': 'Neural Network (Fallback Error)',
-            'prediction_timestamp': datetime.now().isoformat()
-        }
+    timestamp = datetime.now().isoformat()
+    log_message = f"[{timestamp}] {event_type}: {details}"
+    
+    if severity == 'critical':
+        logger.critical(log_message)
+    elif severity == 'error':
+        logger.error(log_message)
+    elif severity == 'warning':
+        logger.warning(log_message)
+    else:
+        logger.info(log_message)
 
-def get_stability_prediction_simple(stope_data: Dict) -> Dict:
-    """
-    Simple current stability prediction for backward compatibility
-    """
-    try:
-        # Try to use simple trained model first
-        simple_model_path = 'models/stope_stability_model.h5'
-        if os.path.exists(simple_model_path):
-            model = tf.keras.models.load_model(simple_model_path)
-            scaler_path = 'models/scaler.pkl'
-            
-            if os.path.exists(scaler_path):
-                scaler = joblib.load(scaler_path)
-                
-                # Prepare features
-                feature_order = ['rqd', 'hr', 'depth', 'dip', 'direction', 'undercut_wdt', 
-                               'rock_type', 'support_type', 'support_density', 'support_installed']
-                
-                features = np.array([[stope_data.get(key, 0) for key in feature_order]])
-                features_scaled = scaler.transform(features)
-                
-                # Make prediction
-                prediction = model.predict(features_scaled, verbose=0)
-                
-                if len(prediction[0]) > 1:  # Multi-class
-                    risk_idx = np.argmax(prediction[0])
-                    risk_levels = ['stable', 'slight_elevated', 'elevated', 'high', 'critical', 'unstable']
-                    risk_level = risk_levels[min(risk_idx, len(risk_levels)-1)]
-                    confidence = float(prediction[0][risk_idx])
-                else:  # Binary
-                    prob = float(prediction[0][0])
-                    risk_level = 'High' if prob > 0.7 else 'Medium' if prob > 0.3 else 'Low'
-                    confidence = abs(prob - 0.5) * 2  # Distance from decision boundary
-                
-                return {
-                    'risk_level': risk_level,
-                    'confidence_score': confidence,
-                    'stable': risk_level in ['stable', 'Low'],
-                    'instability_probability': prob if len(prediction[0]) == 1 else 1 - prediction[0][0],
-                    'explanation': f"Current stability assessment using trained neural network.",
-                    'model_type': 'Neural Network'
-                }
-        
-        # If model is not available, return error
-        return {
-            'error': 'Neural network model not available. Please ensure the dual-branch stability model is trained and accessible.',
-            'model_type': 'Neural Network (Not Available)'
-        }
-            
-    except Exception as e:
-        logger.error(f"Error in neural network prediction: {e}")
-        return {
-            'error': f'Neural network prediction failed: {str(e)}',
-            'model_type': 'Neural Network (Error)'
-        }
-
+# ===== UTILITY FUNCTIONS UPDATED WITH NOTIFICATION SUPPORT =====
