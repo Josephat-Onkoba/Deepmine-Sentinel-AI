@@ -8,7 +8,7 @@
 
 An advanced AI-powered system for predicting underground mining stope stability using hybrid LSTM neural networks and real-time operational event processing. This system combines deep learning with domain-specific mining engineering knowledge to provide early warning capabilities for critical stability conditions.
 
-## 🎯 **Project Overview**
+## **Project Overview**
 
 Deepmine Sentinel AI addresses critical safety challenges in underground mining operations by developing an intelligent prediction system that:
 
@@ -21,7 +21,7 @@ Deepmine Sentinel AI addresses critical safety challenges in underground mining 
 ### **Key Innovation**
 Our hybrid architecture integrates static geological features with dynamic operational sequences, achieving superior performance compared to traditional monitoring approaches.
 
-## 🏗️ **System Architecture**
+## **System Architecture**
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -44,7 +44,7 @@ Our hybrid architecture integrates static geological features with dynamic opera
 └─────────────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 **Core Features**
+## **Core Features**
 
 ### **Impact-Based Scoring Engine**
 - **Mathematical Models**: Quantify cumulative effects of operational activities
@@ -70,7 +70,7 @@ Our hybrid architecture integrates static geological features with dynamic opera
 |--------|-----------|-------------|------------------|
 | **Overall Accuracy** | 84.7% | 70.1% | **91.2%** |
 | **Macro F1-Score** | 78.2% | 64.2% | **87.6%** |
-| **Critical Recall** | 92.3% | 77.8% | **96.7%** ✨ |
+| **Critical Recall** | 92.3% | 77.8% | **96.7%** |
 | **Weighted F1** | 83.4% | 68.9% | **90.4%** |
 
 ### **Real-World Validation**
@@ -79,7 +79,7 @@ Our hybrid architecture integrates static geological features with dynamic opera
 - **8.3% false positive rate** (well below 15% target)
 - **18.4-hour average lead time** for critical predictions
 
-## 🛠️ **Technical Implementation**
+## **Technical Implementation**
 
 ### **Technology Stack**
 - **Backend**: Django 5.2.4 with Python 3.8+
@@ -104,7 +104,7 @@ predictions = Dense(4, activation='softmax')(fused_features)
 Impact_total = Σ(Base_impact × Proximity_factor × Temporal_decay × Duration_factor)
 ```
 
-## 📋 **Installation & Setup**
+## **Installation & Setup**
 
 ### **Prerequisites**
 - Python 3.8 or higher
@@ -165,32 +165,6 @@ python manage.py start_impact_monitoring --alert-threshold critical
 - **Event Logging**: Manual or automated operational event entry
 - **Real-Time Updates**: Immediate impact recalculation on new events
 - **Alert System**: Configurable notifications for risk level changes
-
-## 📁 **Project Structure**
-
-```
-deepmine_sentinel_ai/
-├── core/                           # Main Django application
-│   ├── impact/                     # Impact calculation engine
-│   │   ├── impact_calculator.py    # Mathematical impact algorithms
-│   │   ├── impact_service.py       # High-level service orchestration
-│   │   └── impact_factor_service.py # Impact factor management
-│   ├── tests_scripts/              # Comprehensive test suite
-│   │   ├── tests_impact_calculator_simple.py # Core functionality tests
-│   │   └── tests_impact_calculator.py        # Integration tests
-│   ├── management/commands/        # CLI management tools
-│   │   ├── generate_impact_report.py
-│   │   ├── update_impact_scores.py
-│   │   ├── start_impact_monitoring.py
-│   │   └── populate_impact_factors.py
-│   ├── models.py                   # Database models
-│   ├── views.py                    # Web interface views
-│   └── utils.py                    # Utility functions
-├── docs/                           # Documentation and reports
-│   └── PROJECT_FINAL_REPORT.pdf    # Complete technical report
-├── requirements.txt                # Python dependencies
-└── README.md                       # This file
-```
 
 ## 🧪 **Testing & Validation**
 
