@@ -392,12 +392,5 @@ yarn-error.log
 
 
 #documents and markdown
-convert_to_pdf.py
-DEVELOPMENT_PLAN_AND_ARCHITECTURE.md
-IMPACT_BASED_MODEL_IMPLEMENTATION_PLAN.md
-newimplementation.md
-PROJECT_FINAL_REPORT.md
-PROJECT_FINAL_REPORT.pdf
-convert_to_pdf.py
-PDF_CONVERSION_SUMMARY.md
+Guides and Docs/*
 # End of .gitignore

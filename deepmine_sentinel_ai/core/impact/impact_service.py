@@ -88,6 +88,30 @@ class ImpactCalculationService:
         
         logger.info("Impact Calculation Service initialized")
     
+    def calculate_current_impact_score(self, stope: Stope) -> float:
+        """
+        Calculate current impact score for a single stope
+        
+        Used by data processing pipelines to get current impact scores
+        """
+        try:
+            # Get recent events (last 24 hours)
+            recent_events = OperationalEvent.objects.filter(
+                stope=stope,
+                timestamp__gte=timezone.now() - timedelta(hours=24)
+            )
+            
+            # Use the mathematical calculator
+            impact_score = self.calculator.calculate_total_impact(
+                list(recent_events), stope
+            )
+            
+            return impact_score
+            
+        except Exception as e:
+            logger.warning(f"Failed to calculate impact score for {stope.stope_name}: {str(e)}")
+            return 0.0
+    
     def calculate_real_time_impact(
         self,
         event: OperationalEvent,
@@ -656,6 +680,269 @@ class ImpactCalculationService:
         
         except Exception as e:
             logger.error(f"Error checking system alerts: {e}")
+    
+    def process_single_event(self, event: OperationalEvent) -> Dict:
+        """
+        Process a single operational event immediately
+        
+        Args:
+            event: OperationalEvent instance to process
+            
+        Returns:
+            Dictionary with processing results
+        """
+        start_time = timezone.now()
+        
+        try:
+            with transaction.atomic():
+                # Calculate impact for this specific event
+                event_impact = self.calculator.calculate_event_impact(
+                    event=event,
+                    target_stope=event.stope
+                )
+                
+                # Get or create impact score for the stope
+                impact_score, created = ImpactScore.objects.get_or_create(
+                    stope=event.stope,
+                    defaults={
+                        'current_score': 0.0,
+                        'risk_level': 'stable',
+                        'last_updated': timezone.now()
+                    }
+                )
+                
+                # Store previous values for comparison
+                previous_score = impact_score.current_score
+                previous_risk = impact_score.risk_level
+                
+                # Recalculate total impact score including all recent events
+                total_impact = self._recalculate_stope_impact(event.stope)
+                
+                # Update impact score
+                impact_score.current_score = total_impact
+                impact_score.risk_level = self._determine_risk_level(total_impact)
+                impact_score.last_updated = timezone.now()
+                impact_score.save()
+                
+                # Record impact history
+                ImpactHistory.objects.create(
+                    stope=event.stope,
+                    impact_score=total_impact,
+                    risk_level=impact_score.risk_level,
+                    contributing_event=event,
+                    analysis_timestamp=timezone.now(),
+                    score_change=total_impact - previous_score
+                )
+                
+                # Check for risk level changes and alerts
+                risk_changed = previous_risk != impact_score.risk_level
+                alert_triggered = False
+                
+                if risk_changed and impact_score.risk_level in ['high_risk', 'critical', 'emergency']:
+                    alert_triggered = self._trigger_alert(
+                        stope=event.stope,
+                        new_risk_level=impact_score.risk_level,
+                        previous_risk_level=previous_risk,
+                        triggering_event=event
+                    )
+                
+                processing_time = (timezone.now() - start_time).total_seconds()
+                
+                result = {
+                    'event_id': event.id,
+                    'stope_id': event.stope.id,
+                    'event_impact': event_impact.final_impact,
+                    'previous_total_score': previous_score,
+                    'new_total_score': total_impact,
+                    'score_change': total_impact - previous_score,
+                    'previous_risk_level': previous_risk,
+                    'new_risk_level': impact_score.risk_level,
+                    'risk_level_changed': risk_changed,
+                    'alert_triggered': alert_triggered,
+                    'processing_time_seconds': processing_time,
+                    'timestamp': timezone.now().isoformat()
+                }
+                
+                logger.info(
+                    f"Processed event {event.id} for stope {event.stope.id}: "
+                    f"impact {previous_score:.3f} → {total_impact:.3f} "
+                    f"({impact_score.risk_level})"
+                )
+                
+                return result
+                
+        except Exception as e:
+            logger.error(f"Error processing event {event.id}: {str(e)}")
+            raise
+    
+    def process_event_immediate(self, event: OperationalEvent) -> Dict:
+        """
+        Process event with immediate response (synchronous)
+        Used for real-time API endpoints
+        """
+        return self.process_single_event(event)
+    
+    def _recalculate_stope_impact(self, stope: Stope) -> float:
+        """
+        Recalculate total impact score for a stope considering all recent events
+        """
+        # Get events from the last impact calculation window
+        time_window_hours = getattr(settings, 'IMPACT_CALCULATION_WINDOW_HOURS', 168)  # 1 week default
+        cutoff_time = timezone.now() - timedelta(hours=time_window_hours)
+        
+        recent_events = OperationalEvent.objects.filter(
+            stope=stope,
+            timestamp__gte=cutoff_time
+        ).order_by('timestamp')
+        
+        # Calculate cumulative impact
+        total_impact = 0.0
+        
+        for event in recent_events:
+            event_impact_result = self.calculator.calculate_event_impact(
+                event=event,
+                target_stope=stope
+            )
+            total_impact += event_impact_result.final_impact
+        
+        # Apply decay and normalization
+        normalized_impact = min(total_impact, 1.0)  # Simple normalization for now
+        
+        return normalized_impact
+    
+    def _trigger_alert(self, stope: Stope, new_risk_level: str, 
+                      previous_risk_level: str, triggering_event: OperationalEvent) -> bool:
+        """
+        Trigger alerts for risk level changes
+        """
+        try:
+            alert_data = {
+                'stope_id': stope.id,
+                'stope_name': stope.stope_name,
+                'new_risk_level': new_risk_level,
+                'previous_risk_level': previous_risk_level,
+                'triggering_event_id': triggering_event.id,
+                'event_type': triggering_event.event_type,
+                'timestamp': timezone.now().isoformat()
+            }
+            
+            # Log the alert
+            logger.warning(
+                f"RISK LEVEL CHANGE ALERT: Stope {stope.stope_name} "
+                f"({stope.id}) escalated from {previous_risk_level} to {new_risk_level} "
+                f"due to {triggering_event.event_type} event {triggering_event.id}"
+            )
+            
+            # Send notification (if configured)
+            try:
+                send_notification(
+                    subject=f"Risk Level Alert: {stope.stope_name}",
+                    message=f"Stope {stope.stope_name} risk level changed from "
+                           f"{previous_risk_level} to {new_risk_level}",
+                    alert_data=alert_data
+                )
+            except Exception as e:
+                logger.error(f"Failed to send alert notification: {str(e)}")
+            
+            # Log system event
+            log_system_event(
+                event_type='risk_level_change',
+                severity='high' if new_risk_level in ['critical', 'emergency'] else 'medium',
+                data=alert_data
+            )
+            
+            return True
+            
+        except Exception as e:
+            logger.error(f"Error triggering alert: {str(e)}")
+            return False
+    
+    def batch_update_impact_scores(self, stope_ids: List[int] = None) -> Dict:
+        """
+        Update impact scores for multiple stopes
+        Enhanced for background processing
+        """
+        start_time = timezone.now()
+        
+        if stope_ids is None:
+            stopes = Stope.objects.filter(is_active=True)
+        else:
+            stopes = Stope.objects.filter(id__in=stope_ids, is_active=True)
+        
+        results = {
+            'updated_stopes': [],
+            'failed_stopes': [],
+            'total_processed': 0,
+            'total_errors': 0
+        }
+        
+        for stope in stopes:
+            try:
+                # Recalculate impact
+                new_impact = self._recalculate_stope_impact(stope)
+                
+                # Update or create impact score
+                impact_score, created = ImpactScore.objects.get_or_create(
+                    stope=stope,
+                    defaults={
+                        'current_score': new_impact,
+                        'risk_level': self._determine_risk_level(new_impact),
+                        'last_updated': timezone.now()
+                    }
+                )
+                
+                if not created:
+                    impact_score.current_score = new_impact
+                    impact_score.risk_level = self._determine_risk_level(new_impact)
+                    impact_score.last_updated = timezone.now()
+                    impact_score.save()
+                
+                results['updated_stopes'].append({
+                    'stope_id': stope.id,
+                    'impact_score': new_impact,
+                    'risk_level': impact_score.risk_level
+                })
+                results['total_processed'] += 1
+                
+            except Exception as e:
+                logger.error(f"Error updating stope {stope.id}: {str(e)}")
+                results['failed_stopes'].append({
+                    'stope_id': stope.id,
+                    'error': str(e)
+                })
+                results['total_errors'] += 1
+        
+        processing_time = (timezone.now() - start_time).total_seconds()
+        results['processing_time_seconds'] = processing_time
+        
+        logger.info(
+            f"Batch update completed: {results['total_processed']} stopes processed, "
+            f"{results['total_errors']} errors in {processing_time:.2f}s"
+        )
+        
+        return results
+    
+    def _determine_risk_level(self, impact_score: float) -> str:
+        """
+        Determine risk level based on impact score
+        
+        Args:
+            impact_score: Impact score (0.0-1.0)
+            
+        Returns:
+            Risk level string
+        """
+        if impact_score >= 0.9:
+            return 'emergency'
+        elif impact_score >= 0.7:
+            return 'critical'
+        elif impact_score >= 0.5:
+            return 'high_risk'
+        elif impact_score >= 0.3:
+            return 'elevated'
+        else:
+            return 'stable'
+    
 
 
 # Global service instance

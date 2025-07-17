@@ -706,6 +706,124 @@ class MathematicalImpactCalculator:
         else:
             return 'critical'
     
+    def calculate_total_impact(
+        self,
+        events: List[OperationalEvent],
+        target_stope: Stope,
+        calculation_time: Optional[datetime] = None
+    ) -> float:
+        """
+        Calculate cumulative impact of multiple events on a target stope.
+        
+        This method aggregates individual event impacts with consideration for:
+        - Event interaction effects
+        - Temporal accumulation
+        - Spatial clustering
+        - Non-linear impact combination
+        
+        Args:
+            events: List of operational events to analyze
+            target_stope: The stope being affected
+            calculation_time: Time of calculation (default: now)
+            
+        Returns:
+            Total cumulative impact score
+        """
+        if calculation_time is None:
+            calculation_time = timezone.now()
+            
+        if not events:
+            return 0.0
+            
+        logger.debug(f"Calculating total impact of {len(events)} events on {target_stope}")
+        
+        try:
+            # Calculate individual event impacts
+            individual_impacts = []
+            impact_results = []
+            
+            for event in events:
+                result = self.calculate_event_impact(event, target_stope, calculation_time)
+                individual_impacts.append(result.final_impact)
+                impact_results.append(result)
+            
+            # Simple linear combination for now
+            # In advanced implementation, this could include:
+            # - Non-linear interaction effects
+            # - Stress amplification from multiple events
+            # - Temporal clustering effects
+            base_total = sum(individual_impacts)
+            
+            # Apply interaction multiplier for clustered events
+            interaction_factor = self._calculate_interaction_factor(events, target_stope)
+            
+            # Apply accumulation factor to prevent unrealistic high values
+            accumulation_factor = self._calculate_accumulation_factor(len(events))
+            
+            total_impact = base_total * interaction_factor * accumulation_factor
+            
+            logger.debug(f"Total impact calculation: base={base_total:.4f}, "
+                        f"interaction={interaction_factor:.4f}, "
+                        f"accumulation={accumulation_factor:.4f}, "
+                        f"final={total_impact:.4f}")
+            
+            return max(0.0, total_impact)  # Ensure non-negative
+            
+        except Exception as e:
+            logger.error(f"Error calculating total impact: {e}")
+            return 0.0
+    
+    def _calculate_interaction_factor(
+        self,
+        events: List[OperationalEvent],
+        target_stope: Stope
+    ) -> float:
+        """
+        Calculate interaction factor for multiple events.
+        
+        Events that are spatially and temporally close may have
+        amplified or dampened effects.
+        """
+        if len(events) <= 1:
+            return 1.0
+        
+        # Count nearby event pairs
+        nearby_pairs = 0
+        total_pairs = 0
+        
+        for i, event1 in enumerate(events):
+            for j, event2 in enumerate(events[i+1:], i+1):
+                total_pairs += 1
+                if self._events_are_nearby(event1, event2):
+                    # Check temporal proximity too
+                    time_diff = abs((event1.timestamp - event2.timestamp).total_seconds())
+                    if time_diff < 3600:  # Within 1 hour
+                        nearby_pairs += 1
+        
+        if total_pairs == 0:
+            return 1.0
+        
+        # Apply amplification for clustered events
+        clustering_ratio = nearby_pairs / total_pairs
+        interaction_factor = 1.0 + (clustering_ratio * 0.3)  # Up to 30% amplification
+        
+        return min(1.5, interaction_factor)  # Cap at 50% amplification
+    
+    def _calculate_accumulation_factor(self, num_events: int) -> float:
+        """
+        Calculate accumulation factor to prevent unrealistic impact accumulation.
+        
+        As more events are added, each additional event should have
+        diminishing contribution to prevent infinite accumulation.
+        """
+        if num_events <= 1:
+            return 1.0
+        
+        # Logarithmic dampening - each additional event contributes less
+        accumulation_factor = 1.0 / (1.0 + 0.1 * (num_events - 1))
+        
+        return max(0.5, accumulation_factor)  # Minimum 50% of linear sum
+
     def _get_cache_key(
         self, 
         event: OperationalEvent, 

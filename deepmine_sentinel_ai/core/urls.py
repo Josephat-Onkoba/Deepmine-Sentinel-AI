@@ -1,5 +1,5 @@
 # core/urls.py
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 urlpatterns = [
@@ -8,5 +8,8 @@ urlpatterns = [
     path('stopes/', views.stope_list, name='stope_list'),  # Add list view
     path('stopes/<int:pk>/', views.stope_detail, name='stope_detail'),
     path('upload/', views.upload_excel, name='upload_excel'),
+    
+    # Include API endpoints for event processing
+    path('', include('core.api.urls')),
 ]
 

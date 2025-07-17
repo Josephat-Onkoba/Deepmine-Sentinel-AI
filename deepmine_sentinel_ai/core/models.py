@@ -1556,3 +1556,639 @@ class DataQualityMetrics(models.Model):
 
 # ===== LSTM TIME SERIES DATA STRUCTURES COMPLETE =====
 # Comprehensive models for machine learning training, validation, and quality control
+
+
+# ===== TASK 6: RISK LEVEL CLASSIFICATION SYSTEM =====
+# Comprehensive risk management with configurable thresholds and alerting
+
+class RiskThreshold(models.Model):
+    """
+    Configurable risk level thresholds for dynamic risk classification.
+    Allows mining engineers to adjust risk boundaries based on site-specific conditions.
+    """
+    RISK_LEVEL_CHOICES = [
+        ('stable', 'Stable'),
+        ('elevated', 'Elevated Risk'),
+        ('high_risk', 'High Risk'),
+        ('critical', 'Critical Risk'),
+        ('emergency', 'Emergency'),
+    ]
+    
+    THRESHOLD_TYPE_CHOICES = [
+        ('impact_score', 'Impact Score Threshold'),
+        ('rate_of_change', 'Rate of Change Threshold'),
+        ('cumulative_events', 'Cumulative Events Threshold'),
+        ('time_since_event', 'Time Since Last Event Threshold'),
+        ('proximity_risk', 'Proximity Risk Threshold'),
+        ('composite_risk', 'Composite Risk Threshold'),
+    ]
+    
+    # Basic identification
+    name = models.CharField(
+        max_length=100,
+        help_text="Descriptive name for this threshold configuration"
+    )
+    risk_level = models.CharField(
+        max_length=20,
+        choices=RISK_LEVEL_CHOICES,
+        help_text="Risk level this threshold defines"
+    )
+    threshold_type = models.CharField(
+        max_length=30,
+        choices=THRESHOLD_TYPE_CHOICES,
+        help_text="Type of threshold measurement"
+    )
+    
+    # Threshold values
+    minimum_value = models.FloatField(
+        help_text="Minimum value to trigger this risk level"
+    )
+    maximum_value = models.FloatField(
+        null=True, blank=True,
+        help_text="Maximum value for this risk level (optional)"
+    )
+    
+    # Configuration options
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this threshold is currently active"
+    )
+    priority = models.IntegerField(
+        default=1,
+        help_text="Priority order for threshold evaluation (lower = higher priority)"
+    )
+    requires_confirmation = models.BooleanField(
+        default=False,
+        help_text="Whether risk level changes require manual confirmation"
+    )
+    
+    # Time-based conditions
+    minimum_duration = models.DurationField(
+        default=timedelta(minutes=5),
+        help_text="Minimum time threshold must be exceeded before triggering"
+    )
+    cooldown_period = models.DurationField(
+        default=timedelta(minutes=15),
+        help_text="Minimum time between risk level changes"
+    )
+    
+    # Contextual conditions
+    applies_to_rock_types = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Rock types this threshold applies to (empty = all types)"
+    )
+    applies_to_mining_methods = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Mining methods this threshold applies to (empty = all methods)"
+    )
+    depth_range_min = models.FloatField(
+        null=True, blank=True,
+        help_text="Minimum depth this threshold applies to (meters)"
+    )
+    depth_range_max = models.FloatField(
+        null=True, blank=True,
+        help_text="Maximum depth this threshold applies to (meters)"
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.CharField(
+        max_length=100,
+        default='system',
+        help_text="Who created this threshold configuration"
+    )
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional notes about this threshold"
+    )
+    
+    def __str__(self):
+        return f"{self.get_risk_level_display()}: {self.get_threshold_type_display()} >= {self.minimum_value}"
+    
+    def applies_to_stope(self, stope):
+        """Check if this threshold applies to a specific stope"""
+        # Check rock type
+        if self.applies_to_rock_types and stope.rock_type not in self.applies_to_rock_types:
+            return False
+        
+        # Check mining method
+        if self.applies_to_mining_methods and stope.mining_method not in self.applies_to_mining_methods:
+            return False
+        
+        # Check depth range
+        if self.depth_range_min is not None and stope.depth < self.depth_range_min:
+            return False
+        if self.depth_range_max is not None and stope.depth > self.depth_range_max:
+            return False
+        
+        return True
+    
+    def is_threshold_exceeded(self, value):
+        """Check if a value exceeds this threshold"""
+        if self.maximum_value is not None:
+            return self.minimum_value <= value <= self.maximum_value
+        else:
+            return value >= self.minimum_value
+    
+    class Meta:
+        ordering = ['priority', 'risk_level', 'minimum_value']
+        verbose_name = "Risk Threshold"
+        verbose_name_plural = "Risk Thresholds"
+        indexes = [
+            models.Index(fields=['risk_level', 'is_active']),
+            models.Index(fields=['threshold_type', 'is_active']),
+            models.Index(fields=['priority']),
+        ]
+
+
+class RiskTransition(models.Model):
+    """
+    Track all risk level transitions for comprehensive audit trail and analysis.
+    Provides detailed history of risk level changes with contextual information.
+    """
+    TRANSITION_TRIGGER_CHOICES = [
+        ('threshold_exceeded', 'Threshold Exceeded'),
+        ('manual_override', 'Manual Override'),
+        ('system_calculation', 'System Recalculation'),
+        ('event_impact', 'Operational Event Impact'),
+        ('time_decay', 'Natural Time Decay'),
+        ('support_improvement', 'Ground Support Enhancement'),
+        ('emergency_declaration', 'Emergency Declaration'),
+        ('maintenance_completion', 'Maintenance Activity Completion'),
+        ('monitoring_anomaly', 'Monitoring Anomaly Detected'),
+        ('lstm_prediction', 'LSTM Model Prediction'),
+    ]
+    
+    # Core references
+    stope = models.ForeignKey(
+        Stope,
+        on_delete=models.CASCADE,
+        related_name='risk_transitions',
+        help_text="Stope that experienced the risk level transition"
+    )
+    
+    # Transition details
+    previous_risk_level = models.CharField(
+        max_length=20,
+        help_text="Risk level before transition"
+    )
+    new_risk_level = models.CharField(
+        max_length=20,
+        help_text="Risk level after transition"
+    )
+    
+    # Trigger information
+    trigger_type = models.CharField(
+        max_length=30,
+        choices=TRANSITION_TRIGGER_CHOICES,
+        help_text="What caused this risk level transition"
+    )
+    trigger_value = models.FloatField(
+        null=True, blank=True,
+        help_text="Value that triggered the transition (if applicable)"
+    )
+    threshold_used = models.ForeignKey(
+        RiskThreshold,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='triggered_transitions',
+        help_text="Threshold configuration that triggered this transition"
+    )
+    
+    # Related events and data
+    related_operational_event = models.ForeignKey(
+        OperationalEvent,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='risk_transitions',
+        help_text="Operational event that triggered this transition (if applicable)"
+    )
+    related_impact_score = models.ForeignKey(
+        ImpactScore,
+        on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name='risk_transitions',
+        help_text="Impact score at the time of transition"
+    )
+    
+    # Timing information
+    transition_timestamp = models.DateTimeField(
+        auto_now_add=True,
+        help_text="When this transition occurred"
+    )
+    duration_in_previous_level = models.DurationField(
+        null=True, blank=True,
+        help_text="How long the stope was in the previous risk level"
+    )
+    
+    # Validation and confirmation
+    is_confirmed = models.BooleanField(
+        default=False,
+        help_text="Whether this transition has been confirmed by an operator"
+    )
+    confirmed_by = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Who confirmed this transition"
+    )
+    confirmed_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When this transition was confirmed"
+    )
+    
+    # Analysis and context
+    confidence_score = models.FloatField(
+        default=1.0,
+        validators=[MinValueValidator(0), MaxValueValidator(1)],
+        help_text="Confidence in this transition (0.0-1.0)"
+    )
+    contributing_factors = models.JSONField(
+        default=dict,
+        help_text="Factors that contributed to this transition"
+    )
+    impact_assessment = models.TextField(
+        blank=True,
+        help_text="Assessment of the impact and implications of this transition"
+    )
+    
+    # Metadata
+    notes = models.TextField(
+        blank=True,
+        help_text="Additional notes about this transition"
+    )
+    
+    def __str__(self):
+        arrow = "→"
+        return f"{self.stope.stope_name}: {self.previous_risk_level} {arrow} {self.new_risk_level}"
+    
+    @property
+    def is_escalation(self):
+        """Check if this is an escalation (increase in risk level)"""
+        risk_order = ['stable', 'elevated', 'high_risk', 'critical', 'emergency']
+        try:
+            prev_idx = risk_order.index(self.previous_risk_level)
+            new_idx = risk_order.index(self.new_risk_level)
+            return new_idx > prev_idx
+        except ValueError:
+            return False
+    
+    @property
+    def is_de_escalation(self):
+        """Check if this is a de-escalation (decrease in risk level)"""
+        risk_order = ['stable', 'elevated', 'high_risk', 'critical', 'emergency']
+        try:
+            prev_idx = risk_order.index(self.previous_risk_level)
+            new_idx = risk_order.index(self.new_risk_level)
+            return new_idx < prev_idx
+        except ValueError:
+            return False
+    
+    @property
+    def risk_level_delta(self):
+        """Calculate the magnitude of risk level change"""
+        risk_order = ['stable', 'elevated', 'high_risk', 'critical', 'emergency']
+        try:
+            prev_idx = risk_order.index(self.previous_risk_level)
+            new_idx = risk_order.index(self.new_risk_level)
+            return new_idx - prev_idx
+        except ValueError:
+            return 0
+    
+    def calculate_duration_in_previous_level(self):
+        """Calculate how long the stope was in the previous risk level"""
+        if not self.transition_timestamp:
+            return None
+            
+        previous_transition = RiskTransition.objects.filter(
+            stope=self.stope,
+            transition_timestamp__lt=self.transition_timestamp
+        ).order_by('-transition_timestamp').first()
+        
+        if previous_transition:
+            self.duration_in_previous_level = self.transition_timestamp - previous_transition.transition_timestamp
+        
+        return self.duration_in_previous_level
+    
+    def save(self, *args, **kwargs):
+        """Override save to calculate duration in previous level"""
+        if not self.transition_timestamp:
+            self.transition_timestamp = timezone.now()
+        if not self.duration_in_previous_level:
+            self.calculate_duration_in_previous_level()
+        super().save(*args, **kwargs)
+    
+    class Meta:
+        ordering = ['-transition_timestamp']
+        verbose_name = "Risk Transition"
+        verbose_name_plural = "Risk Transitions"
+        indexes = [
+            models.Index(fields=['stope', 'transition_timestamp']),
+            models.Index(fields=['new_risk_level', 'transition_timestamp']),
+            models.Index(fields=['trigger_type', 'transition_timestamp']),
+            models.Index(fields=['is_confirmed']),
+        ]
+
+
+class RiskAlert(models.Model):
+    """
+    Alert system for risk level transitions and threshold breaches.
+    Manages alert lifecycle, escalation, and acknowledgment.
+    """
+    ALERT_TYPE_CHOICES = [
+        ('risk_escalation', 'Risk Level Escalation'),
+        ('threshold_breach', 'Threshold Breach'),
+        ('rapid_change', 'Rapid Risk Change'),
+        ('persistent_risk', 'Persistent High Risk'),
+        ('anomaly_detected', 'Anomaly Detected'),
+        ('prediction_warning', 'LSTM Prediction Warning'),
+        ('system_error', 'System Error'),
+        ('manual_alert', 'Manual Alert'),
+    ]
+    
+    PRIORITY_CHOICES = [
+        ('low', 'Low Priority'),
+        ('medium', 'Medium Priority'),
+        ('high', 'High Priority'),
+        ('critical', 'Critical Priority'),
+        ('emergency', 'Emergency Priority'),
+    ]
+    
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('acknowledged', 'Acknowledged'),
+        ('investigating', 'Under Investigation'),
+        ('resolved', 'Resolved'),
+        ('false_positive', 'False Positive'),
+        ('suppressed', 'Suppressed'),
+    ]
+    
+    # Core references
+    stope = models.ForeignKey(
+        Stope,
+        on_delete=models.CASCADE,
+        related_name='risk_alerts',
+        help_text="Stope this alert relates to"
+    )
+    risk_transition = models.ForeignKey(
+        RiskTransition,
+        on_delete=models.CASCADE,
+        related_name='alerts',
+        help_text="Risk transition that triggered this alert"
+    )
+    
+    # Alert details
+    alert_type = models.CharField(
+        max_length=30,
+        choices=ALERT_TYPE_CHOICES,
+        help_text="Type of alert"
+    )
+    priority = models.CharField(
+        max_length=20,
+        choices=PRIORITY_CHOICES,
+        help_text="Alert priority level"
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='active',
+        help_text="Current status of this alert"
+    )
+    
+    # Alert content
+    title = models.CharField(
+        max_length=200,
+        help_text="Brief alert title"
+    )
+    message = models.TextField(
+        help_text="Detailed alert message"
+    )
+    recommended_actions = models.JSONField(
+        default=list,
+        help_text="List of recommended actions to address this alert"
+    )
+    
+    # Timing
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="When this alert was created"
+    )
+    acknowledged_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When this alert was acknowledged"
+    )
+    resolved_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When this alert was resolved"
+    )
+    
+    # Acknowledgment and resolution
+    acknowledged_by = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Who acknowledged this alert"
+    )
+    resolved_by = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Who resolved this alert"
+    )
+    resolution_notes = models.TextField(
+        blank=True,
+        help_text="Notes about how this alert was resolved"
+    )
+    
+    # Escalation tracking
+    escalation_level = models.IntegerField(
+        default=0,
+        help_text="Current escalation level (0 = initial, higher = more escalated)"
+    )
+    last_escalated_at = models.DateTimeField(
+        null=True, blank=True,
+        help_text="When this alert was last escalated"
+    )
+    escalated_to = models.CharField(
+        max_length=100,
+        blank=True,
+        help_text="Who this alert was escalated to"
+    )
+    
+    # Notification tracking
+    notification_sent = models.BooleanField(
+        default=False,
+        help_text="Whether notification has been sent for this alert"
+    )
+    notification_channels = models.JSONField(
+        default=list,
+        help_text="Channels where notifications were sent"
+    )
+    
+    # Metadata
+    alert_data = models.JSONField(
+        default=dict,
+        help_text="Additional structured data about this alert"
+    )
+    
+    def __str__(self):
+        return f"{self.get_priority_display()}: {self.title} ({self.stope.stope_name})"
+    
+    @property
+    def is_active(self):
+        """Check if this alert is still active"""
+        return self.status in ['active', 'acknowledged', 'investigating']
+    
+    @property
+    def response_time(self):
+        """Calculate time from creation to acknowledgment"""
+        if self.acknowledged_at:
+            return self.acknowledged_at - self.created_at
+        return None
+    
+    @property
+    def resolution_time(self):
+        """Calculate time from creation to resolution"""
+        if self.resolved_at:
+            return self.resolved_at - self.created_at
+        return None
+    
+    @property
+    def age(self):
+        """Calculate how long this alert has been active"""
+        if self.resolved_at:
+            return self.resolved_at - self.created_at
+        return timezone.now() - self.created_at
+    
+    def acknowledge(self, acknowledged_by, notes=None):
+        """Acknowledge this alert"""
+        self.status = 'acknowledged'
+        self.acknowledged_by = acknowledged_by
+        self.acknowledged_at = timezone.now()
+        if notes:
+            self.resolution_notes = notes
+        self.save()
+    
+    def resolve(self, resolved_by, resolution_notes):
+        """Resolve this alert"""
+        self.status = 'resolved'
+        self.resolved_by = resolved_by
+        self.resolved_at = timezone.now()
+        self.resolution_notes = resolution_notes
+        self.save()
+    
+    def escalate(self, escalated_to):
+        """Escalate this alert to next level"""
+        self.escalation_level += 1
+        self.last_escalated_at = timezone.now()
+        self.escalated_to = escalated_to
+        self.save()
+    
+    def suppress(self, suppressed_by, reason):
+        """Suppress this alert"""
+        self.status = 'suppressed'
+        self.resolved_by = suppressed_by
+        self.resolved_at = timezone.now()
+        self.resolution_notes = f"Suppressed: {reason}"
+        self.save()
+    
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Risk Alert"
+        verbose_name_plural = "Risk Alerts"
+        indexes = [
+            models.Index(fields=['stope', 'status', 'created_at']),
+            models.Index(fields=['priority', 'status']),
+            models.Index(fields=['alert_type', 'created_at']),
+            models.Index(fields=['status', 'created_at']),
+        ]
+
+
+class RiskClassificationRule(models.Model):
+    """
+    Advanced rules for dynamic risk classification beyond simple thresholds.
+    Supports complex multi-condition logic for sophisticated risk assessment.
+    """
+    CONDITION_TYPE_CHOICES = [
+        ('and', 'All Conditions Must Be Met (AND)'),
+        ('or', 'Any Condition Must Be Met (OR)'),
+        ('weighted', 'Weighted Score Calculation'),
+        ('sequential', 'Sequential Condition Evaluation'),
+    ]
+    
+    # Rule identification
+    name = models.CharField(
+        max_length=100,
+        help_text="Descriptive name for this classification rule"
+    )
+    description = models.TextField(
+        help_text="Detailed description of what this rule evaluates"
+    )
+    target_risk_level = models.CharField(
+        max_length=20,
+        choices=RiskThreshold.RISK_LEVEL_CHOICES,
+        help_text="Risk level this rule assigns when conditions are met"
+    )
+    
+    # Rule logic
+    condition_type = models.CharField(
+        max_length=20,
+        choices=CONDITION_TYPE_CHOICES,
+        default='and',
+        help_text="How multiple conditions should be evaluated"
+    )
+    rule_conditions = models.JSONField(
+        default=list,
+        help_text="List of conditions that must be evaluated"
+    )
+    
+    # Configuration
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this rule is currently active"
+    )
+    priority = models.IntegerField(
+        default=1,
+        help_text="Rule evaluation priority (lower = higher priority)"
+    )
+    
+    # Applicability filters
+    applies_to_rock_types = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Rock types this rule applies to (empty = all types)"
+    )
+    applies_to_mining_methods = models.JSONField(
+        default=list,
+        blank=True,
+        help_text="Mining methods this rule applies to (empty = all methods)"
+    )
+    
+    # Metadata
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    created_by = models.CharField(
+        max_length=100,
+        default='system',
+        help_text="Who created this rule"
+    )
+    
+    def __str__(self):
+        return f"{self.name} → {self.target_risk_level}"
+    
+    def applies_to_stope(self, stope):
+        """Check if this rule applies to a specific stope"""
+        if self.applies_to_rock_types and stope.rock_type not in self.applies_to_rock_types:
+            return False
+        if self.applies_to_mining_methods and stope.mining_method not in self.applies_to_mining_methods:
+            return False
+        return True
+    
+    class Meta:
+        ordering = ['priority', 'name']
+        verbose_name = "Risk Classification Rule"
+        verbose_name_plural = "Risk Classification Rules"
+
+
+# ===== TASK 6: RISK LEVEL CLASSIFICATION SYSTEM COMPLETE =====
+# Comprehensive risk management with configurable thresholds, transitions, alerts, and rules
