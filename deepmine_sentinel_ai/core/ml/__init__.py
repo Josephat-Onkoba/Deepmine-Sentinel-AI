@@ -1,11 +1,9 @@
 """
 Machine Learning Models for Mining Stability Prediction
 
-This module implements Task 8: Design LSTM Architecture with:
-- Basic LSTM model structure with TensorFlow/Keras
-- Multi-step sequence prediction capabilities  
-- Attention mechanisms for important event weighting
-- Multi-output architecture for different prediction horizons
+This module implements:
+- Task 8: Design LSTM Architecture with TensorFlow/Keras, multi-step prediction, attention mechanisms
+- Task 9: LSTM Training Pipeline with hyperparameter tuning, cross-validation, checkpointing, monitoring
 """
 
 # Import LSTM models and configurations
@@ -35,5 +33,9 @@ if lstm_models_available:
         'ModelArchitectureConfig', 'AttentionLayer', 'MultiHeadAttention',
         'BasicLSTMModel', 'MultiStepLSTMModel', 'AttentionLSTMModel', 
         'MultiOutputLSTMModel', 'CompleteLSTMPredictor',
-        'ModelBuilder', 'ModelTrainer', 'ModelEvaluator'
+        'ModelBuilder', 'ModelTrainer', 'ModelEvaluator',
+        'TrainingPipelineConfig', 'HyperparameterConfig', 'CrossValidationConfig',
+        'CheckpointConfig', 'MonitoringConfig', 'HyperparameterTuner',
+        'CrossValidator', 'ModelCheckpoint', 'MetricsTracker', 
+        'MiningSpecificMonitor', 'LSTMTrainingPipeline'
     ])
