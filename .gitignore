@@ -393,4 +393,8 @@ yarn-error.log
 
 #documents and markdown
 Guides and Docs/*
+
+#backup
+backup_before_organization
+
 # End of .gitignore
